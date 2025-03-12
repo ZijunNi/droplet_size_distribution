@@ -43,9 +43,10 @@ close all
 %%%% End of Calculating Mean Velocity Profile %%%%%
 
 
+
 %%%%%%% Calculating Critical Droplet Size %%%%%%%%
-    left_bound = 1e-5;%lower bound of initial droplet size
-    right_bound = 1e-3;%upper bound of initial droplet size
+    left_bound = 1e-9;%lower bound of initial droplet size
+    right_bound = 1;%upper bound of initial droplet size
 
 
     data.ratio = [0.01,0.02,0.05,0.10];

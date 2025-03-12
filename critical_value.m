@@ -1,7 +1,7 @@
 function [critical_value,physical_duration,physical_threshold,physical_tau,alternative_density] = ...
     critical_value(U,V,dx,zpos_delta,Reynolds_number,ratio,left_bound,right_bound)
 
-    rho_c = [1,1000];%mass density of comtinumm phase
+    rho_c = [1,1];%mass density of comtinumm phase
 
     %%%% density = 1 %%%%
         myFunction = @(x) condition_function(U,V,dx,zpos_delta,Reynolds_number,ratio,x,rho_c(1)); 

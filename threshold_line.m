@@ -17,30 +17,22 @@ function [threshold_series,time_m] = threshold_line(u,v,dx,targetProbability,hei
     % 开始计算
     % ii = 1;
     time_m = zeros(1,num_threshold);
-    % while(ii<=num_threshold)
-    parfor ii=1:num_threshold
+
+    parfor ii=1:num_threshold%此处可引入并行加快速度
+
         threshold = threshold_series(ii);
-        
         % 用于存储超过阈值的序列长度
         % sequenceLengths = zeros(numSignals, 1); % 假设最坏情况长度为 numSignals
         sequenceLengths = [];
-        
         % 遍历每组信号
         for i = 1:numSignals
             signal = interped_2D_field(:,i); % 获取当前信号
+
             [duration,~] = calculate_time_above_threshold(signal,threshold,sampling_interval);
+
             sequenceLengths = [sequenceLengths;duration];
         end
         [~,time_m(ii)] = calculate_percentiles(sequenceLengths,targetProbability);%真实统计数据
     
-        % % 计算直方图的 bin 高度和 bin 中心
-        % if ~isempty(sequenceLengths)
-        %     [~, binEdges] = histcounts(sequenceLengths, 'Normalization', 'pdf');
-        %     binCenters = (binEdges(1:end-1) + binEdges(2:end)) / 2; % 计算 bin 中心
-        % else
-        %     disp('No valid sequences found above the threshold.');
-        % end
-    
-        % ii = ii +1;
     end
 end

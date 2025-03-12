@@ -4,7 +4,7 @@
     sigma = 0.004;    
     theta_c = 1;  
 
-    if(0) % 简单模型，没有非线性项
+    if(1) % 简单模型，没有非线性项
         t_ca = d * mu_d /sigma;% 张力特征时间
     
         % 初始化 tau 数组
@@ -25,8 +25,8 @@
         rs2 = subs(res,a,sigma/d);
         rs3 = subs(rs2,k,mu_d);
         parfor i = 1:length(t_c)
-            tau(i) = vpasolve(rs3==t_c(i));
-                    % disp(i)
+            res0 = vpasolve(rs3==t_c(i));
+            tau(i) = res0;
         end
 
     end
