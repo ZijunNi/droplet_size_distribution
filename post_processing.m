@@ -6,6 +6,8 @@ close all
 % i = Spanwise, j = Streamwise, k = Wall-normal 
     data_set = "example_data.mat";%AEM full field, containing U,V,W,zpos and xpos
     data.Reynolds_number = 3200; % Reynolds numbers of the data source
+    left_bound = 1e-6;%lower bound of initial droplet size
+    right_bound = 1e-3;%upper bound of initial droplet size
 %%%% End of Data Input Section %%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -38,20 +40,16 @@ close all
         ylabel('Streamwise Velocity $U^+$',Interpreter='latex');
         legend(Location="northwest");
         filename = fullfile(data_fold_path,['Mean Velocity Profile of Re_tau = ',num2str(data.Reynolds_number),'.pdf']);
-        saveas(gca,filename);
+        exportgraphics(gca,filename,'ContentType', 'vector');
         close(gcf);
 %%%% End of Calculating Mean Velocity Profile %%%%%
 
 
 
 %%%%%%% Calculating Critical Droplet Size %%%%%%%%
-    left_bound = 1e-9;%lower bound of initial droplet size
-    right_bound = 1;%upper bound of initial droplet size
-
-
     data.ratio = [0.01,0.02,0.05,0.10];
     for i = 1:length(data.ratio)
-        [data.critical_value(i),data.physical_duration{i},data.physical_threshold{i},data.physical_tau{i},data.alternative_density{i}] = ...
+        [data.critical_value(i),data.physical_duration{i},data.physical_threshold{i},data.physical_tau{i}] = ...
             critical_value(U,V,data.dx,data.zpos,data.Reynolds_number,data.ratio(i),left_bound,right_bound);
     
         figure;

@@ -7,7 +7,6 @@ function [threshold_series,time_m] = threshold_line(u,v,dx,targetProbability,hei
     full_data = sort(reshape(interped_2D_field,[],1));%一维的完整数据
     [min_threshold,max_threshold] = calculate_percentiles(full_data,0.001);
     
-    
     numSignals = length(interped_2D_field(1,:)); % 信号组数，与展向采样点数量相同
     sampling_interval = dx; % 采样间隔，与流向采样点（时间或空间）间距相同
     
