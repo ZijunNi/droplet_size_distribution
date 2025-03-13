@@ -6,15 +6,13 @@ close all
 % i = Spanwise, j = Streamwise, k = Wall-normal 
     data_set = "example_data.mat";%AEM full field, containing U,V,W,zpos and xpos
     data.Reynolds_number = 3200; % Reynolds numbers of the data source
-    left_bound = 1e-6;%lower bound of initial droplet size
-    right_bound = 1e-3;%upper bound of initial droplet size
+    left_bound = 1e-8;%lower bound of initial droplet size
+    right_bound = 1;%upper bound of initial droplet size
 %%%% End of Data Input Section %%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     load(data_set);
     data.zpos = zpos_delta;% Wall-normal grid postions
-    correction_para = 0;% 加入修正量以匹配对数律
-    U = U - correction_para;
     data.dx = mean(diff(xpos_delta)); % Streamwise data point spacing
 
 %%%% Create Data Folder %%%%
@@ -32,16 +30,23 @@ close all
 %%%%%%%% Calculating Mean Velocity Profile %%%%%%%%
     data.mean_U = squeeze(mean(mean(U,2),1));%save mean velocity profile
     figure;
-        semilogx(data.zpos,data.mean_U,'-x',linewidth=2,DisplayName='Raw Data');
+
+        semilogx(data.zpos*data.Reynolds_number,data.mean_U,'-x',linewidth=2,DisplayName='Raw Data');
         hold on
-        semilogx(data.zpos,log(data.zpos*data.Reynolds_number)/0.41+5,linewidth=1,DisplayName='Log-law');
+        semilogx(data.zpos*data.Reynolds_number,log(data.zpos*data.Reynolds_number)/0.41+5,linewidth=1,DisplayName='Log-law');
         hold off
         xlabel('Wall-normal Distance $z^+$',Interpreter='latex');
         ylabel('Streamwise Velocity $U^+$',Interpreter='latex');
         legend(Location="northwest");
-        filename = fullfile(data_fold_path,['Mean Velocity Profile of Re_tau = ',num2str(data.Reynolds_number),'.pdf']);
-        exportgraphics(gca,filename,'ContentType', 'vector');
-        close(gcf);
+
+    if(profile_check(data.mean_U,data.zpos,data.Reynolds_number))
+        warning(['The mean velocity profile deviates from the logarithmic law. ' ...
+            'Please verify that the input velocity values are properly non-dimensionalized.'])
+        pause;
+    end
+    filename = fullfile(data_fold_path,['Mean Velocity Profile of Re_tau = ',num2str(data.Reynolds_number),'.pdf']);
+    exportgraphics(gca,filename,'ContentType', 'vector');
+    close(gcf);
 %%%% End of Calculating Mean Velocity Profile %%%%%
 
 

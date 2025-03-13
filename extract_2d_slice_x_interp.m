@@ -4,12 +4,8 @@ function result = extract_2d_slice_x_interp(A, z, zq, re_tau)
     result = zeros(a, b);
     matching_loc = 12; % 对数区与线性区的匹配位置，应为14.2左右
     save_pos = zq * re_tau; % 转换为y+坐标
-
-    % if(max(z)<re_tau)
-    %     z = z*re_tau;% 转换为y+坐标
-    % end
     
-    if(1)%对数插值
+    if(1)%Log interpolation
 
         if(save_pos > matching_loc)
             % 在对数区进行插值：将z转换为对数坐标
@@ -28,7 +24,7 @@ function result = extract_2d_slice_x_interp(A, z, zq, re_tau)
             result = interpolateLayer(data_linear, z_linear, save_pos, a, b, 2);
         end
 
-    else%完全线性插值
+    else%Linear interpolation
         z = [0;z];
         A = cat(3, zeros(a,b), A);
         result = interpolateLayer(A, z, zq, a, b, c);

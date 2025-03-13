@@ -31,9 +31,15 @@ py_input = [271,361,431,526,584,621]; % 输入像素Y坐标
 % 若要批量转换多个坐标，可使用：
 test_pixels = [px_input',py_input';];
 [x_all, y_all] = pixel2abs(test_pixels);
-loglog(x_all,y_all,'x',linewidth=2)
+loglog(x_all,y_all,'x',linewidth=2,DisplayName='Sun Chao Experiment')
 hold on
-loglog([6.6422e+03,2.5377e+05],[1.21e-2,7e-5],'ro',linewidth=2)
+my_data_x = [6.6422e+03,2.5377e+05]';
+my_data_y = [1.21e-2,7e-5]';
+loglog(my_data_x,my_data_y,'ro',linewidth=2,DisplayName='Our Therory')
 hold on
-loglog(x_all,x_all.^(-1.2)*500,'-')
+ref = [x_all;my_data_x];
+loglog(ref,ref.^(-1.2)*500,'-',DisplayName='$\langle D\rangle\sim Re^{-1.2}$')
 hold off
+xlabel('$Re$',Interpreter='latex')
+ylabel('$\langle D\rangle/d$',Interpreter='latex')
+legend(Interpreter="latex")

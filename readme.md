@@ -18,7 +18,7 @@
 # MATLAB Code Documentation for Flow Field Post-processing
 
 ## Introduction
-![alt text](<fig 1.png>)
+![alt text](<./doc/fig 1.png>)
 
  - A new step (Step 4) is introduced in this process to address the challenge of achieving convergence when only the maximum duration is considered. To overcome this limitation, we calculate the probability density function (PDF) of all durations during which the shear stress exceeds a predefined threshold. From this PDF, we derive a modified $t_m$ , which corresponds to a specific percentile (referred to as the "Given Ratio" in Figure 4 and as `data.ratio` in the code). Consequently, a revised threshold-duration relationship is established, as illustrated in Pic.5.
 ---
@@ -26,12 +26,12 @@
 ## Data Input Section
 Below is a detailed explanation of the variables that need to be modified:
 
-### Input Data File
+### Input data File
 - **`data_set`**: This variable specifies the name of the input data file which shall be in the same folder as the `post_processing.mat` file. The file should be in `.mat` format and contain the following variables:
-  - `U`: Streamwise velocity component (3D array).
-  - `V`: Spanwise velocity component (3D array).
-  - `zpos_delta`: Wall-normal grid positions (1D array).
-  - `xpos_delta`: Streamwise grid positions (1D array).
+  - `U`: Streamwise velocity component, normalized by the friction velocity $u_\tau$ (3D array).
+  - `V`: Spanwise velocity component, normalized by the friction velocity $u_\tau$ (3D array).
+  - `zpos_delta`: Wall-normal grid positions, normalized by the half width of the channel $\delta$ (1D array).
+  - `xpos_delta`: Streamwise grid positions, normalized by the half width of the channel $\delta$ (1D array).
 
   Example:
   ```matlab
@@ -45,6 +45,9 @@ Below is a detailed explanation of the variables that need to be modified:
   ```matlab
   data.Reynolds_number = 3200; % Replace with the Reynolds number
   ```
+### The Upper and Lower Initial Values of the Bisection Method
+- **`left_bound` and `right_bound`**: These two variables respectively represent the initial upper and lower bounds selected by the program when using the bisection method to approximate the critical value of particle diameter. **It is important to note that these two variables are normalized by the half-width of the channel.**
+
 
 ## Running the Script
 Once the input data file and Reynolds number have been specified, you can run the script. The script will automatically perform the following steps:
@@ -75,3 +78,10 @@ After running the script, the following files will be generated in the `data_N` 
 - **Mean Velocity Profile Plot**: A PDF file showing the mean velocity profile.
 - **Critical Droplet Size Plots**: PDF files showing the critical droplet size for each ratio.
 - **Processed Data File**: A `.mat` file containing the processed data.
+
+## Error and Warning Notifications
+- **<font color=red>Initial Bound Error, [left_bound, right_bound] need to be adjusted.</font>**
+This notification suggests that the current upper and lower bounds are not appropriate for the dataset being used. The issue can be resolved by adjusting the two variables described in **Section 2.3**. As a practical reference, the critical value of particle diameter is generally slightly smaller than $y^+\approx 1$, which can guide the adjustment process.
+If the aforementioned method does not yield the desired results, consider modifying the parameter within the parentheses following the `if` statement on line 8 of the file `extract_2d_slice_x_interp.m`. By default, this parameter is set to 1, which enables logarithmic interpolation to obtain the results rather than simple linear interpolation. However, in cases where both low friction Reynolds numbers and wall-resolved grids are present, the near-wall grid points may already lie within the linear region. In such scenarios, linear interpolation should be used instead, which can be achieved by setting the aforementioned parameter to 0. Please note that if this value is modified, it is essential to revert it back to the default value of 1 before running the program again.
+- **<font color=red>The mean velocity profile deviates from the logarithmic law. Please verify that the input velocity values are properly non-dimensionalized.</font>**
+The aforementioned notification indicates that the mean velocity profile of the input data deviates significantly from the standard logarithmic law. **It is important to note that the input velocity field should be non-dimensionalized using the friction velocity $u_\tau$, while the input coordinates should be normalized by the half-width of the channel $\delta$.** The logarithmic law referenced here is given by $u^+ = \ln(y^+)/\kappa + B$, where $\kappa = 0.41$ and $B = 5$.
