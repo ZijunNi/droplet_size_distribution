@@ -1,0 +1,104 @@
+close all
+clear all
+clc
+load('AEM_data_VEL_FIELDS_progress_save2_Rahul_0.12.mat');
+
+U_ALL = load_data.U_ALL;
+V_ALL = load_data.V_ALL;%/utau_est;
+W_ALL = load_data.W_ALL;%/utau_est;
+Num_layers = 1:6;
+
+n = 6;%累加的层数
+Re_tau = 100*2^(n-1);
+
+zpos = (0:size(U_ALL,3)-1)*2^(n-1); 
+zpos_delta = zpos/(100*2^(n-1));
+ 
+xpos = (0:size(U_ALL,2)-1)*2^(n-1);
+xpos_delta = xpos./(100*2^(n-1));
+
+ypos = (0:size(U_ALL,1)-1)*2^(n-1);
+ypos_delta = ypos./(100*2^(n-1));
+
+%% add up all hier. to get full field
+close all
+
+U = sum(U_ALL(:,:,:,1:n),4);
+V = sum(V_ALL(:,:,:,1:n),4);
+W = sum(W_ALL(:,:,:,1:n),4);
+
+
+u_mean = mean(U, [1,2], 'omitnan');
+w_mean = mean(W, [1,2], 'omitnan');
+
+
+% 计算脉动量和雷诺应力
+for i = 1:length(u_mean)
+u_prime(:,:,i) = U(:,:,i) - u_mean(i);
+w_prime(:,:,i) = W(:,:,i) - w_mean(i);
+end
+
+Reynolds_Shear = mean(u_prime.* w_prime, [1,2], 'omitnan');
+profile = squeeze(Reynolds_Shear);
+utau_cal = sqrt(-min(profile));
+% profile = profile/utau_cal^2;
+
+
+
+figure;
+sgtitle(['$Re_\tau = $',num2str(Re_tau)],'Interpreter', 'latex');
+% 设置全局边距（单位为归一化坐标，范围[0,1]）
+% [左，下，右，上]的边距
+bottom_margin = 0.15; % 增加底部边距
+subplot_margin = 0.05; % 子图之间的间距
+
+% 调整子图位置
+subplot(2,2,1);
+set(gca, 'Position', [0.1, 0.7, 0.35, 0.2]); % [左，下，宽，高]
+semilogx(zpos_delta*Re_tau, squeeze(u_mean));
+xlabel('Wall-normal Distance $z^+$', 'Interpreter', 'latex');
+ylabel('Raw $\overline{u}$', 'Interpreter', 'latex');
+
+subplot(2,2,2);
+set(gca, 'Position', [0.55, 0.7, 0.35, 0.2]);
+semilogx(zpos_delta*Re_tau, squeeze(w_mean));
+xlabel('Wall-normal Distance $z^+$', 'Interpreter', 'latex');
+ylabel('Raw $\overline{w}$', 'Interpreter', 'latex');
+
+subplot(2,2,3);
+z = zpos_delta;
+set(gca, 'Position', [0.1, 0.2, 0.35, 0.4]);
+plot(z*Re_tau, profile, 'LineWidth', 1.5);
+ylim([1.1*min(profile), 0]);
+xlabel('Wall-normal Distance $z^+$', 'Interpreter', 'latex');
+ylabel('$\langle u''w'' \rangle$', 'Interpreter', 'latex');
+grid on;
+
+subplot(2,2,4);
+x = zpos_delta; 
+y = squeeze(u_mean);
+% 计算中点处的导数
+[dy_dx, x_mid] = central_diff_midpoints(y, x);
+
+set(gca, 'Position', [0.55, 0.2, 0.35, 0.4]);
+plot(x_mid*Re_tau, dy_dx);
+xlabel('Wall-normal Distance $z^+$', 'Interpreter', 'latex');
+ylabel(' $\frac{d\overline{u}}{dz}$', 'Interpreter', 'latex');
+grid on;
+
+% 添加底部文字（使用 annotation）
+text_content = {
+    ['Minimum value of Reynolds stress profile = ', num2str(min(profile))], 
+    ['Estimated value of u_tau = ', num2str(sqrt(-min(profile)))]};
+
+annotation('textbox', [0.1, 0.01, 0.8, 0.1], ... % [左，下，宽，高]
+    'String', text_content, ...
+    'EdgeColor', 'none', ...
+    'HorizontalAlignment', 'center', ...
+    'FontSize', 10, ...
+    'Interpreter', 'none');
+
+%保存图像
+    figure_name = ['Re_tau = ',num2str(Re_tau),'.pdf'];
+    filename = fullfile(pwd,figure_name);
+    exportgraphics(gcf, filename, 'ContentType', 'vector');

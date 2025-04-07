@@ -10,7 +10,10 @@ condition_function(u,v,dx,zpos_delta,Reynolds_number,ratio,diameter,rho_c)
         
         %计算得到该粒子半径对应的阈值-时间线
         interped_2D_field = u_tau*extract_2d_slice_x_interp(u,zpos_delta,diameter,Reynolds_number);%导出考察位置处的速度切片
-        physical_duration = duration.*delta/mean(interped_2D_field(:));%用当地流向速度将空间坐标转化为时间坐标
+        % physical_duration = duration.*delta/mean(interped_2D_field(:));%用当地流向速度将空间坐标转化为时间坐标
+        mid_line_loc = find(zpos_delta-1<=0,1,'last');%中线位置
+        mid_plane = squeeze(u(:,:,mid_line_loc));
+        physical_duration = duration.*delta/(9.5*u_tau);%用当地流向速度将空间坐标转化为时间坐标
         physical_tau = calculate_tau(physical_duration,delta*diameter);% 计算破碎线
         
         % semilogx(physical_duration,physical_threshold,'-s');

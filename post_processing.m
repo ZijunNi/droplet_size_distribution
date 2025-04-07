@@ -6,7 +6,7 @@ close all
 % i = Spanwise, j = Streamwise, k = Wall-normal 
     data_set = "example_data.mat";%AEM full field, containing U,V,W,zpos and xpos
     data.Reynolds_number = 3200; % Reynolds numbers of the data source
-    left_bound = 1e-8;%lower bound of initial droplet size
+    left_bound = 1e-5;%lower bound of initial droplet size
     right_bound = 1;%upper bound of initial droplet size
 %%%% End of Data Input Section %%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
