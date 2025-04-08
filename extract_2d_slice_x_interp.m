@@ -2,7 +2,7 @@ function result = extract_2d_slice_x_interp(A, z, zq, re_tau)
 %zq为物理空间中的插值位置，z为物理空间中的垂向坐标点位置，都不是无量纲量
     [a, b, c] = size(A);
     result = zeros(a, b);
-    matching_loc = 12; % 对数区与线性区的匹配位置，应为14.2左右
+    matching_loc = 14; % 对数区与线性区的匹配位置，应为14左右
     save_pos = zq * re_tau; % 转换为y+坐标
     
     if(1)%Default value is 1
