@@ -5,7 +5,7 @@
     theta_c = 1;  
 
     if(1) % 简单模型，没有非线性项
-        t_ca = d * mu_d /sigma % 张力特征时间
+        t_ca = d * mu_d /sigma; % 张力特征时间
     
         % 初始化 tau 数组
         tau = zeros(size(t_c));

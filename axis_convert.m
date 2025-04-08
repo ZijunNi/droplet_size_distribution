@@ -34,7 +34,7 @@ test_pixels = [px_input',py_input';];
 loglog(x_all,y_all,'x',linewidth=2,DisplayName='Sun Chao Experiment')
 hold on
 my_data_x = [6.6422e+03,2.5377e+05]';
-my_data_y = [1.29755e-2,6.96836e-05]';
+my_data_y = [1.29755e-2,6.96844e-05]';
 loglog(my_data_x,my_data_y,'ro',linewidth=2,DisplayName='Our Therory')
 hold on
 ref = [x_all;my_data_x];

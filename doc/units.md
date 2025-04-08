@@ -21,4 +21,14 @@ $$G = KRe^{1.58}$$
 
 Through substitution of these expressions into the definition of friction Reynolds number $Re_\tau = \frac{u_\tau d}{\nu}$, we establish the conversion relationship between the experimental Reynolds number $Re$ and the friction Reynolds number $Re_\tau$ as reported in Reference [1].
 
+### Figure Plotting Issue ( Vertical Axis )
+
+![](2025-04-08-22-09-26.jpg)
+For the vertical axis in the above figure, it represents the threshold of shear stress acting on droplets, which is a dimensional quantity with units of N/m². Since the fluid viscosity $\nu$ and half-channel width $\delta$ have been predefined in the program, the computed friction velocity $u_\tau$ will consequently increase with higher Reynolds numbers. During the shear stress calculation process, dimensionalization is implemented using $\rho_cu_\tau^2/2$, causing the scale on the vertical axis to grow substantially with rising Reynolds numbers. The shear stress computation and its dimensionalization procedure can be referenced in the following code segments from `threshold_line.m` and `condition_function.m`:
+```
+physical_threshold = threshold_series*0.5*rho_c*u_tau^2;
+```
+
+### Reference
+
 [1] Yi L, Toschi F, Sun C. Global and local statistics in turbulent emulsions. Journal of Fluid Mechanics. 2021;912:A13. doi:10.1017/jfm.2020.1118
