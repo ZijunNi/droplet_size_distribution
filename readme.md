@@ -84,7 +84,7 @@ For English version of this readme file, please refer to `readme_english.md`.
 若上述方法无效，可修改文件`extract_2d_slice_x_interp.m`中第8行`if`语句后括号内的参数（默认值为1）。该参数控制是否使用对数插值，在低摩擦雷诺数且壁面网格解析度足够时（近壁网格点位于线性区），应将其设为0使用线性插值。注意修改后需恢复默认值1。
 
 - **<font color=red>The mean velocity profile deviates from the logarithmic law. Please verify that the input velocity values are properly non-dimensionalized.</font>**
-该提示表明输入数据的平均速度剖面与标准对数律存在显著偏差。**特别注意：输入速度场应使用摩擦速度$u_\tau$进行无量纲化，输入坐标应使用通道半宽$\delta$进行无量纲化**。本文所采用对数律为$u^+ = \ln(y^+)/\kappa + B$，其中![公式](https://latex.codecogs.com/svg.image?\kappa = 0.41,B = 5)$\kappa = 0.41$，$B = 5$。
+该提示表明输入数据的平均速度剖面与标准对数律存在显著偏差。**特别注意：输入速度场应使用摩擦速度$u_\tau$进行无量纲化，输入坐标应使用通道半宽$\delta$进行无量纲化**。本文所采用对数律为$u^+ = \ln(y^+)/\kappa + B$，其中![公式](https://latex.codecogs.com/svg.image?\kappa=0.41,B=5)$\kappa = 0.41$，$B = 5$。
 
 ## 6. 附录：函数功能详细说明
 
