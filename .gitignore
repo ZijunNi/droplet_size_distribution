@@ -4,7 +4,10 @@ data_*/
 
 # 忽略特定类型的文件
 *.png
+*.asv
 !doc/*.png
+
+de_silva_data/*.pdf
 
 *.mat
 

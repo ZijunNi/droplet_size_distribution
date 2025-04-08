@@ -21,7 +21,6 @@
 ![alt text](<./doc/fig 1.png>)
 
  - A new step (Step 4) is introduced in this process to address the challenge of achieving convergence when only the maximum duration is considered. To overcome this limitation, we calculate the probability density function (PDF) of all durations during which the shear stress exceeds a predefined threshold. From this PDF, we derive a modified $t_m$ , which corresponds to a specific percentile (referred to as the "Given Ratio" in Figure 4 and as `data.ratio` in the code). Consequently, a revised threshold-duration relationship is established, as illustrated in Pic.5.
----
 
 ## Data Input Section
 Below is a detailed explanation of the variables that need to be modified:
