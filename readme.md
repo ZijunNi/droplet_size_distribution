@@ -17,6 +17,8 @@
 
 # MATLAB Code Documentation for Flow Field Post-processing
 
+若需要本文件的中文版本，请参见目录下的``readme_chinese.md``
+
 ## Introduction
 ![alt text](<./doc/fig 1.png>)
 
