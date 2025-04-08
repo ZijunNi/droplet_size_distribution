@@ -5,8 +5,6 @@ function [critical_value,physical_duration,physical_threshold,physical_tau] = ..
 
         myFunction = @(x) condition_function(U,V,dx,zpos_delta,Reynolds_number,ratio,x,rho_c); 
         tolerance = 1e-9; 
-        left_bound0 = left_bound;
-        right_bound0 = right_bound;
 
         if myFunction(left_bound) == myFunction(right_bound)
             error('Initial Bound Error, [left_bound, right_bound] need to be adjusted');

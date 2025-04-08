@@ -67,7 +67,7 @@ A plot of the mean velocity profile is generated and saved as a PDF file in the 
 ### Calculating Critical Droplet Size
 The script calculates the critical droplet size based on the input data. The calculation involves the following steps:
 - Defining the bounds for the initial droplet size (`left_bound` and `right_bound`).
-- Iterating over a set of ratios (`data.ratio`, which has been set ) to compute the critical value, physical duration, physical threshold and physical tau.
+- Iterating over a set of ratios (`data.ratio`, which has been set ) to compute the critical value, physical duration, physical threshold and physical tau of droplet.
 
 Plots of the critical droplet size for each ratio are generated and saved as PDF files in the `data_N` folder.
 
@@ -87,3 +87,59 @@ If the aforementioned method does not yield the desired results, consider modify
 
 - **<font color=red>The mean velocity profile deviates from the logarithmic law. Please verify that the input velocity values are properly non-dimensionalized.</font>**
 The aforementioned notification indicates that the mean velocity profile of the input data deviates significantly from the standard logarithmic law. **It is important to note that the input velocity field should be non-dimensionalized using the friction velocity $u_\tau$, while the input coordinates should be normalized by the half-width of the channel $\delta$.** The logarithmic law referenced here is given by $u^+ = \ln(y^+)/\kappa + B$, where $\kappa = 0.41$ and $B = 5$.
+
+## 6. Appendix: Detailed Function Specifications
+
+### 6.1 `critical_value` Function
+Input Parameters:
+| Parameter Name | Parameter Meaning | Non-dimensional Units |
+| :--: | :--: | :--: |
+| `U`, `V` | Streamwise and spanwise components of velocity field | Friction velocity $u_\tau$ |
+| `dx` | Streamwise grid spacing | Half-channel width $\delta$ |
+| `zpos_delta` | Vertical grid position | Half-channel width $\delta$ |
+| `Reynolds_number` | Friction velocity-based Reynolds number | \ |
+| `ratio` | Quantile threshold ratio | \ |
+| `left_bound`, `right_bound` | Initial bounds for bisection method | \ |
+
+The function uses a constant continuous phase density of 1000 and employs `condition_function` to determine whether droplets of specified size will break.
+
+### 6.2 `condition_function` Function
+
+Input Parameters:
+| Parameter Name | Parameter Meaning | Non-dimensional Units |
+| :--: | :--: | :--: |
+| `u`, `v` | Streamwise and spanwise components of velocity field | Friction velocity $u_\tau$ |
+| `dx` | Streamwise grid spacing | Half-channel width $\delta$ |
+| `zpos_delta` | Vertical grid position | Half-channel width $\delta$ |
+| `diameter` | Particle diameter | Half-channel width $\delta$ |
+| `Reynolds_number` | Friction velocity-based Reynolds number | \ |
+| `ratio` | Quantile threshold ratio | \ |
+| `rho_c` | Continuous phase density | With units |
+
+Output Parameters:
+| Parameter Name | Type | Description |
+|----------------|------|-------------|
+| `result` | Boolean | Whether erosion condition is met (True/False) |
+| `physical_duration` | Array | Effective stress duration (unit: seconds) |
+| `physical_threshold` | Array | Physical critical shear stress threshold (unit: Pa) |
+| `physical_tau` | Array | Particle breakup characteristic time (unit: seconds) |
+
+#### Algorithm Workflow
+1. **Physical Quantity Calculation**
+   - Compute friction velocity using experimental parameters (half-channel width $\delta = 5\ \rm{mm}$ and continuous phase viscosity $\nu = 1.8\times 10^{-6}\ \rm{m^2/s}$) and input Reynolds number:  
+     $u_\tau = Re \cdot \nu_c / \delta$
+   - Calculate non-dimensional stress threshold `threshold_series` and corresponding duration `duration` using `threshold_line` function.
+
+2. **Unit Conversion**  
+   - Convert non-dimensional stress to physical units using $\tau = \rho_c u_d^2 / 2$:  
+     `physical_threshold = threshold_series * 0.5 * rho_c * u_tau^2`
+   - Convert spatial scales to temporal scales via Taylor's frozen hypothesis. Three velocity estimation methods are implemented:  
+     - Local mean velocity  
+     - Fixed multiple (0.8×) of centerline velocity  
+     - Fixed multiple (9.5×) of friction velocity  
+     Compute $\bar{u}$ and convert duration:  
+     `physical_duration = duration * delta / u_bar`
+
+3. **Breakup Condition Judgment**  
+   - Compute particle breakup characteristic time `physical_tau` using `calculate_tau` function.
+   - Determine breakup condition via `physical_tau < physical_threshold` and output result in `result`.
