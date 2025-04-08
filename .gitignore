@@ -4,6 +4,8 @@ data_*/
 
 # 忽略特定类型的文件
 *.png
+!doc/*.png
+
 *.mat
 
 
