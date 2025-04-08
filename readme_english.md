@@ -91,7 +91,7 @@ The aforementioned notification indicates that the mean velocity profile of the 
 ## 6. Appendix: Detailed Function Specifications
 
 ### 6.1 `critical_value` Function
-Input Parameters:
+**Input Parameters Table**  
 | Parameter Name | Parameter Meaning | Non-dimensional Units |
 | :--: | :--: | :--: |
 | `U`, `V` | Streamwise and spanwise components of velocity field | Friction velocity $u_\tau$ |
@@ -105,7 +105,7 @@ The function uses a constant continuous phase density of 1000 and employs `condi
 
 ### 6.2 `condition_function` Function
 
-Input Parameters:
+**Input Parameters Table**  
 | Parameter Name | Parameter Meaning | Non-dimensional Units |
 | :--: | :--: | :--: |
 | `u`, `v` | Streamwise and spanwise components of velocity field | Friction velocity $u_\tau$ |
@@ -116,7 +116,7 @@ Input Parameters:
 | `ratio` | Quantile threshold ratio | \ |
 | `rho_c` | Continuous phase density | With units |
 
-Output Parameters:
+**Output Parameters Table**  
 | Parameter Name | Type | Description |
 |----------------|------|-------------|
 | `result` | Boolean | Whether erosion condition is met (True/False) |
@@ -143,3 +143,24 @@ Output Parameters:
 3. **Breakup Condition Judgment**  
    - Compute particle breakup characteristic time `physical_tau` using `calculate_tau` function.
    - Determine breakup condition via `physical_tau < physical_threshold` and output result in `result`.
+
+### 6.3 `calculate_tau` Function
+
+**Input Parameters Table**  
+| Parameter Name | Parameter Meaning | Non-dimensionalized Unit |  
+| :--: | :--: | :--: |  
+| `t_c` | Duration of shear stress acting on the droplet | Dimensional (with units) |  
+| `d` | Droplet diameter | Half-channel width δ |  
+
+**Predefined Physical Parameters in the Function**  
+| Parameter Name | Parameter Meaning | Value |  
+| :--: | :--: | :--: |  
+| `mu_d` | Droplet fluid viscosity | 0.0021 kg/(m·s) |  
+| `sigma` | Surface tension coefficient | 0.004 N/m |  
+| `theta_c` | Critical deformation threshold | 1 |  
+
+**Implementation Notes**  
+The function provides two methods to calculate the critical breakup criteria for droplets. Generally, the nonlinear term can be neglected, and the first method suffices. The second model directly derives from the original Voigt model, requiring symbolic solutions to differential equations and is more complex.  
+
+**Function Description**  
+For each input threshold duration, the function calculates and outputs the maximum shear stress `tau` that the droplet can withstand without breaking under that duration.
