@@ -119,10 +119,10 @@ For English version of this readme file, please refer to `readme_english.md`.
 
 | 参数名称               | 类型    | 说明                                 |
 |------------------------|---------|--------------------------------------|
-| `result`                | 逻辑值  | 是否满足侵蚀条件（True/False）        |
+| `result`                | 逻辑值  | 液滴是否会被剪碎        |
 | `physical_duration`     | 数组    | 有效应力作用持续时间（单位：秒）     |
 | `physical_threshold`    | 数组    | 物理临界剪切应力阈值（单位：Pa）     |
-| `physical_tau`          | 数组    | 颗粒破碎特征时间（单位：秒）         |
+| `physical_tau`          | 数组    | 液滴在对应阈值剪应力大小下所能维持形状不破碎的最长时间（单位：秒）         |
 
 #### 算法流程
 1. **物理量计算**
@@ -148,8 +148,8 @@ For English version of this readme file, please refer to `readme_english.md`.
 函数中事先给定了如下物理参数：
 | 参数名称 | 参数含义 | 值 |
 | :--:   | :--:   | :--:   |
-|`mu_d`| 液滴流体的粘度| $0.0021\rm kg/(m\cdot s)$|
-| `sigma` | 表面张力系数 | $0.004\rm N/m$ |
-| `theta_c` | 临界变形量 | $1$ |
+|`mu_d`| 液滴流体的粘度| 0.0021 kg/(m·s)|
+| `sigma` | 表面张力系数 | 0.004 N/m |
+| `theta_c` | 临界变形量 | 1 |
 
 程序中提供了两种计算液滴临界破碎线的方法，一般来讲可以忽略非线性项，采用第一种即可。第二种模型直接计算自原始的Voigt模型，需要符号求解微分方程，较为复杂。函数对每个输入的阈值持续时间计算液滴在此持续时间下能保持自身不破碎的最大剪应力`tau`后输出。
