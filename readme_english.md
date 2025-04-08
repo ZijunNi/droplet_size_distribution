@@ -150,7 +150,7 @@ The function uses a constant continuous phase density of 1000 and employs `condi
 | Parameter Name | Parameter Meaning | Non-dimensionalized Unit |  
 | :--: | :--: | :--: |  
 | `t_c` | Duration of shear stress acting on the droplet | Dimensional (with units) |  
-| `d` | Droplet diameter | Half-channel width δ |  
+| `d` | Droplet diameter | Dimensional (with units) |  
 
 **Predefined Physical Parameters in the Function**  
 | Parameter Name | Parameter Meaning | Value |  

@@ -143,7 +143,7 @@ For English version of this readme file, please refer to `readme_english.md`.
 | 参数名称 | 参数含义 | 无量纲化单位 |
 | :--:   | :--:   | :--:   |
 |`t_c`| 作用于液滴上的剪应力维持的时间长度| 有量纲|
-| `d` | 液滴直径 | 半槽宽$\delta$ |
+| `d` | 液滴直径 | 有量纲 |
 
 函数中事先给定了如下物理参数：
 | 参数名称 | 参数含义 | 值 |
