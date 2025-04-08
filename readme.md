@@ -103,7 +103,7 @@ For English version of this readme file, please refer to `readme_english.md`.
 
 ### 6.2 `condition_function`函数
 
-函数的输入参数表为`u,v,dx,zpos_delta,Reynolds_number,ratio,diameter,rho_c`
+函数的输入参数表为`u,v,dx,zpos_delta,Reynolds_number,ratio,diameter,rho_c`，其含义说明如下：
 
 | 参数名称 | 参数含义 | 无量纲化单位 |
 | :--:   | :--:   | :--:   |
@@ -137,3 +137,19 @@ For English version of this readme file, please refer to `readme_english.md`.
    - 利用函数`calculate_tau`计算颗粒破碎特征时间 `physical_tau`
    - 最终通过 `physical_tau < physical_threshold` 判断破碎条件是否成立，并将结果用变量`result`输出。
 
+### 6.3 `calculate_tau`函数
+
+函数的输入参数表为`t_c,d`。
+| 参数名称 | 参数含义 | 无量纲化单位 |
+| :--:   | :--:   | :--:   |
+|`t_c`| 作用于液滴上的剪应力维持的时间长度| 有量纲|
+| `d` | 液滴直径 | 半槽宽$\delta$ |
+
+函数中事先给定了如下物理参数：
+| 参数名称 | 参数含义 | 值 |
+| :--:   | :--:   | :--:   |
+|`mu_d`| 液滴流体的粘度| $0.0021\rm kg/(m\cdot s)$|
+| `sigma` | 表面张力系数 | $0.004\rm N/m$ |
+| `theta_c` | 临界变形量 | $1$ |
+
+程序中提供了两种计算液滴临界破碎线的方法，一般来讲可以忽略非线性项，采用第一种即可。第二种模型直接计算自原始的Voigt模型，需要符号求解微分方程，较为复杂。函数对每个输入的阈值持续时间计算液滴在此持续时间下能保持自身不破碎的最大剪应力`tau`后输出。
