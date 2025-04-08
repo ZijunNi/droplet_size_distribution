@@ -1,9 +1,11 @@
 # 忽略整个文件夹
 data/
+data_*/
 
 # 忽略特定类型的文件
 *.png
 *.mat
+
 
 # 忽略特定的文件
 secret_config.json
