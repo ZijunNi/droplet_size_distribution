@@ -1,6 +1,7 @@
 # 忽略整个文件夹
 data/
 data_*/
+other_files/
 
 # 忽略特定类型的文件
 *.png

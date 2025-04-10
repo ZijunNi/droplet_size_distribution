@@ -1,19 +1,51 @@
 % 示例使用
-clear,clc
+clear,clc,clf
 re_tau = 180;
-filename = ['../data_',num2str(re_tau),'_old/Re_tau = ',num2str(re_tau),'.mat'];
+filename = ['../data_',num2str(re_tau),'/Re_tau = ',num2str(re_tau),'.mat'];
 load(filename)
 initial_value = 0.1;
-threshold = data.critical_value(1);
-ratio = 0.4;%分裂比例小于等于0.5
-compressed_data = compress_data_process(initial_value, threshold,ratio);%第一次分裂
 
+re_5210.di_less_dia = [0.19847	0.39978	0.59622	0.80178	1.00309	1.2044	1.4051	1.60641	1.80286	2.00842	2.2	2.40131	2.60201	2.80332];
+re_5210.pdf = [0.03176	0.43487	1.08767	1.00889	0.72896	0.51658	0.48737	0.24535	0.18075	0.12084	0.05521	0.03559	0.0234	0.02726];
 
-density_compare(compressed_data, threshold, ratio, 100);%计算PDF并检测收敛
+re_7810.di_less_dia = [0.50013	0.60108	0.7063	0.80178	0.89788	1.00309	1.09858	1.2044	1.29989	1.4051	1.5012	1.60641	1.7019	1.80711	1.90321	2.00356	2.10451	2.2];
+re_7810.pdf = [0.9895	1.21899	1.02616	0.8493	1.00889	0.8493	0.71496	0.80128	0.60186	0.54754	0.33304	0.30817	0.18744	0.13809	0.09809	0.11209	0.06952	0.04147];
+
+plot(re_5210.di_less_dia,re_5210.pdf,'rx',"LineWidth",2,"DisplayName",'Re = 5210 (Exp.)')
+hold on
+plot(re_7810.di_less_dia,re_7810.pdf,'bx',"LineWidth",2,"DisplayName",'Re = 7810 (Exp.)')
+hold on
+
+%% 
+
+if (0)%液滴分裂可追踪
+    threshold = data.critical_value(1);
+    ratio = 0.4;%分裂比例小于等于0.5
+    compressed_data = compress_data_process(initial_value, threshold,ratio);%第一次分裂
+    density_compare(compressed_data, threshold, ratio, 100);%计算PDF并检测收敛
+else
+    tic
+    [dat, iter] = independent_split(1e+6, data.critical_value(1),0.05,0.2);
+    toc
+    % % 绘制对数直方图
+    % figure;
+    di_less_dat = dat/mean(dat);
+    histogram(di_less_dat, 10,"Normalization","pdf","DisplayName",'Theory');
+    hold on
+
+    set(gca, 'YScale', 'log');
+    legend();
+    % ylim([0 10^2]);
+    % xlim([0 3]);
+    xlabel('D/<D>');
+    ylabel('PDF');
+    title(['The number of iter = ',num2str(iter)]);
+    
+end
 
 
 function density_compare(compressed_data,threshold,ratio,max_iter)
-%本函数直接比较尺寸分布的频率
+    %本函数直接比较尺寸分布的频率
     if size(compressed_data, 2) == 1
         error('输入的必须是压缩数据！')
     end
@@ -172,9 +204,9 @@ end
 
 function [sumCounts] = bin_counts(values,counts,edges)
 
-if size(values,2)~=1||size(counts,2)~=1
-    error('输入的数据需要将值和数量分离。');
-end
+    if size(values,2)~=1||size(counts,2)~=1
+        error('输入的数据需要将值和数量分离。');
+    end
 
     % 分配数值到区间
     bins = discretize(values, edges);
@@ -213,7 +245,34 @@ function [reconstructed_data] = reconstruct_data(processed_data)
     end
 end
 
+function [dat, iter] = independent_split(n, xu_threshold,p,q)
+    %   Inputs:
+    %       n            - 液滴个数
+    %       p and q      - 上下界
+    %       xu_threshold - Threshold value for iterative processing
+    %   Outputs:
+    %       dat          - Processed data array
+    %       iter         - Number of iterations performed
 
+    initial_value = 5;
+    % 初始化数组
+    dat = initial_value * ones(n, 1);
+    iter = 0;
+
+    % 主处理循环
+    while sum(dat > xu_threshold) > 1
+        % 生成随机数并调整范围到[p, q]
+        b = rand(size(dat));
+        bb = p + (q-p).*b;
+        
+        mask = dat > xu_threshold;
+        dat(mask) = dat(mask) .* bb(mask);
+        
+        iter = iter + 1;
+    end
+
+
+end
 
 
 
