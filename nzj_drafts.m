@@ -1,3 +1,29 @@
+
+
+% k_values = [1,2,3];              % 固定形状参数
+theta_values = [1, 2, 3];
+x = linspace(0, 1, 100);
+
+% figure;
+hold on;
+% for k = k_values
+    
+    k = 5;
+    theta = 0.01/k;
+    mu = k*theta;
+    sigma2 = k*theta^2;
+    %%
+    pdf = (x.^(k-1) .* exp(-x/theta)) / (gamma(k) * theta^k);
+    % plot(x, pdf, 'LineWidth', 1.5, 'DisplayName', ['\theta = ' num2str(theta)]);
+    plot(x, pdf, 'LineWidth', 1.5, 'DisplayName', ['k = ' num2str(k)]);
+% end
+xlabel('x');
+ylabel('PDF');
+title('Gamma分布随尺度参数\theta的变化（k=3）');
+legend;
+
+
+%%
 clc,clear
 load("self_example_data.mat")
 %%

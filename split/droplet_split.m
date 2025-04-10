@@ -3,7 +3,6 @@ clear,clc,clf
 re_tau = 180;
 filename = ['../data_',num2str(re_tau),'/Re_tau = ',num2str(re_tau),'.mat'];
 load(filename)
-initial_value = 0.1;
 
 re_5210.di_less_dia = [0.19847	0.39978	0.59622	0.80178	1.00309	1.2044	1.4051	1.60641	1.80286	2.00842	2.2	2.40131	2.60201	2.80332];
 re_5210.pdf = [0.03176	0.43487	1.08767	1.00889	0.72896	0.51658	0.48737	0.24535	0.18075	0.12084	0.05521	0.03559	0.0234	0.02726];
@@ -16,13 +15,27 @@ hold on
 plot(re_7810.di_less_dia,re_7810.pdf,'bx',"LineWidth",2,"DisplayName",'Re = 7810 (Exp.)')
 hold on
 
-%% 
 
-if (0)%液滴分裂可追踪
+if (1)%液滴分裂可追踪
+    initial_value = 0.2*ones(1,1);
     threshold = data.critical_value(1);
-    ratio = 0.4;%分裂比例小于等于0.5
+    ratio = [0.01,2e-5];%固定比例分裂时此比例需小于0.5，随机比例分裂时可以为0-1的任意子区间，gamma随机比例时为输入为[均值,方差]
+    tic
     compressed_data = compress_data_process(initial_value, threshold,ratio);%第一次分裂
-    density_compare(compressed_data, threshold, ratio, 100);%计算PDF并检测收敛
+    toc
+    dat = reconstruct_data(compressed_data);
+    di_less_dat = dat/mean(dat);
+    histogram(di_less_dat,15,"Normalization","pdf","DisplayName",'Theory');
+    hold on
+    set(gca, 'YScale', 'log');
+    legend();
+    % ylim([0 10^2]);
+    % xlim([0 3]);
+    xlabel('$D/\langle D\rangle $','Interpreter','latex');
+    ylabel('PDF');
+    title(['The number of droplets =',num2str(length(dat))]);
+    
+    % density_compare(compressed_data, threshold, ratio, 100);%计算PDF并检测收敛
 else
     tic
     [dat, iter] = independent_split(1e+6, data.critical_value(1),0.05,0.2);
@@ -30,17 +43,16 @@ else
     % % 绘制对数直方图
     % figure;
     di_less_dat = dat/mean(dat);
-    histogram(di_less_dat, 10,"Normalization","pdf","DisplayName",'Theory');
+    histogram(di_less_dat,15,"Normalization","pdf","DisplayName",'Theory');
     hold on
 
     set(gca, 'YScale', 'log');
     legend();
     % ylim([0 10^2]);
     % xlim([0 3]);
-    xlabel('D/<D>');
+    xlabel('$D/\langle D\rangle $','Interpreter','latex');
     ylabel('PDF');
     title(['The number of iter = ',num2str(iter)]);
-    
 end
 
 
@@ -137,8 +149,12 @@ function [processed_data] = compress_data_process(data, threshold,ratio)
     % 输出：
     %   processed_data - 处理后的[Nx2]矩阵，列1为值，列2为对应计数
     
-    % ratio = 0.5;%小于等于0.5
-    split_rule = @(x) deal(x*(1-ratio)^(1/3), x*ratio^(1/3));  %分裂规则
+    if(length(ratio)==1)
+        split_rule = @(x) deal(x*(1-ratio)^(1/3), x*ratio^(1/3));  %分裂规则
+    elseif(length(ratio)==2)
+        disp('使用随机分裂。');
+    end
+
     if ~exist(['./data_',num2str(ratio)])
         mkdir(['./data_',num2str(ratio)])
     end
@@ -156,17 +172,34 @@ function [processed_data] = compress_data_process(data, threshold,ratio)
     
     % 迭代处理
     has_changes = true;
+    iteration = 0;%进度计算器
     while has_changes
+        iteration = iteration + 1;%进度计算器
+        fprintf('正在进行第 %d 次迭代...\n', iteration);
+
         has_changes = false;
         new_data = [];
         
-        for i = 1:size(current_data, 1)
+        parfor i = 1:size(current_data, 1)
             val = current_data(i, 1);
             count = current_data(i, 2);
             
             if val > threshold
                 % ================= 分裂规则区域 ======================
-                [split_val1, split_val2] = split_rule(val);
+                if(length(ratio)==1)
+                    [split_val1, split_val2] = split_rule(val);
+                elseif(length(ratio)==2)
+                    % ratio_val = ratio(1)+(ratio(2)-ratio(1))*rand(1);%采用均匀分布
+                    ratio_val = 1;%采用gamma分布,大于1小于0的不考虑
+                    while (abs(ratio_val-0.5)>=0.5)%采用gamma分布,大于1小于0的不考虑
+                        theta_gamma = ratio(2)/ratio(1);
+                        k_gamma = ratio(1)/theta_gamma;
+                        ratio_val = gamrnd(k_gamma, theta_gamma, 1, 1);%采用gamma分布,大于1小于0的不考虑
+                    end%采用gamma分布,大于1小于0的不考虑
+
+                    split_val1 = val*(1-ratio_val)^(1/3);
+                    split_val2 = val*ratio_val^(1/3);
+                end
                 % ================= 分裂规则结束 ======================
                 
                 new_data = [new_data; split_val1, count; split_val2, count];
@@ -174,6 +207,7 @@ function [processed_data] = compress_data_process(data, threshold,ratio)
             else
                 new_data = [new_data; val, count];
             end
+
         end
         
         % 合并重复值
@@ -183,6 +217,15 @@ function [processed_data] = compress_data_process(data, threshold,ratio)
             current_data = [merged_values, merged_counts];
         else
             current_data = [];
+        end
+
+        % 显示当前迭代结果信息
+        if isempty(current_data)
+            fprintf('迭代 %d 完成，无剩余数据。\n', iteration);
+        else
+            max_val = max(current_data(:, 1));
+            fprintf('迭代 %d 完成，当前数据条目数：%d，最大值：%.5f\n', ...
+                    iteration, size(current_data, 1), max_val);
         end
     end
     
@@ -235,7 +278,7 @@ function [reconstructed_data] = reconstruct_data(processed_data)
     if total_count > 1e5
         warning(['重建数据量达%d，可能占用%.2fMB内存，',...
             '建议仅用于小数据验证，按回车键继续。'], total_count, total_count*8/1e6);
-            pause
+            % pause
     end
     
     % 执行重建
