@@ -180,7 +180,7 @@ function [processed_data] = compress_data_process(data, threshold,ratio)
         has_changes = false;
         new_data = [];
         
-        parfor i = 1:size(current_data, 1)
+        for i = 1:size(current_data, 1)
             val = current_data(i, 1);
             count = current_data(i, 2);
             
