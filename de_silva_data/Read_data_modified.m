@@ -3,12 +3,16 @@ clear all
 clc
 load('AEM_data_VEL_FIELDS_progress_save2_Rahul_0.12.mat');
 
+%%
 U_ALL = load_data.U_ALL;
 V_ALL = load_data.V_ALL;%/utau_est;
 W_ALL = load_data.W_ALL;%/utau_est;
 Num_layers = 1:6;
 
-n = 6;%累加的层数
+n = 1;%累加的层数
+
+% while(n<6)
+%     n = n +1;
 Re_tau = 100*2^(n-1);
 
 zpos = (0:size(U_ALL,3)-1)*2^(n-1); 
@@ -20,7 +24,7 @@ xpos_delta = xpos./(100*2^(n-1));
 ypos = (0:size(U_ALL,1)-1)*2^(n-1);
 ypos_delta = ypos./(100*2^(n-1));
 
-%% add up all hier. to get full field
+% add up all hier. to get full field
 close all
 
 U = sum(U_ALL(:,:,:,1:n),4);
@@ -38,12 +42,45 @@ u_prime(:,:,i) = U(:,:,i) - u_mean(i);
 w_prime(:,:,i) = W(:,:,i) - w_mean(i);
 end
 
-Reynolds_Shear = mean(u_prime.* w_prime, [1,2], 'omitnan');
+Reynolds_Shear = mean(u_prime.* w_prime, [1,2]);%, 'omitnan');
 profile = squeeze(Reynolds_Shear);
-utau_cal = sqrt(-min(profile));
+utau_est = sqrt(-min(profile));
 % profile = profile/utau_cal^2;
+%%
+% begin_pos = 2^(7-n)+5;
+% 计算所有z+值
+z_plus = squeeze(z_frame(1,1,:)) * Re_tau;
+
+% 确定对数区范围：30 < z+ < 0.1*Re_tau
+logical_region = (z_plus > 50) & (z_plus < max(0.1 * Re_tau,60));
+
+% 提取符合条件的索引
+indices = find(logical_region);
+p_lin = polyfit(log(z_plus(indices)), squeeze(u_mean(indices)), 1);
+% p_lin = polyfit(log(squeeze(z_frame(1,1,begin_pos:begin_pos+3))*Re_tau),squeeze(u_mean(begin_pos:begin_pos+3)),1);  % 2:5 corresponds to the range in the mean flow profile I fit too
+figure;semilogx(squeeze(z_frame(1,1,:))*Re_tau,squeeze(u_mean),'-x');hold on;
+plot([1 Re_tau],polyval(p_lin,log([1 Re_tau])),'--k');
+plot([1 Re_tau],polyval([2.5 p_lin(2)],log([1 Re_tau])),'--b');
+Uinf_est = 5-p_lin(2);
+% get Uinf estimates
+Uinf = polyval([2.5 1.8],log(Re_tau));
+% U_ALL = U_ALL +Uinf;
+
+%%
+% add up all hier. to get full field
+close all
+
+U = sum(U_ALL(:,:,:,1:n),4)/utau_est+Uinf;
+V = sum(V_ALL(:,:,:,1:n),4)/utau_est;
+W = sum(W_ALL(:,:,:,1:n),4)/utau_est;
 
 
+u_mean = mean(U, [1,2], 'omitnan');
+w_mean = mean(W, [1,2], 'omitnan');
+
+
+%% 绘制雷诺应力对比图
+close all
 
 figure;
 sgtitle(['$Re_\tau = $',num2str(Re_tau)],'Interpreter', 'latex');
@@ -56,6 +93,8 @@ subplot_margin = 0.05; % 子图之间的间距
 subplot(2,2,1);
 set(gca, 'Position', [0.1, 0.7, 0.35, 0.2]); % [左，下，宽，高]
 semilogx(zpos_delta*Re_tau, squeeze(u_mean));
+hold on 
+semilogx(zpos_delta*Re_tau,log(zpos_delta*Re_tau)/0.41+5,DisplayName='Log Law');
 xlabel('Wall-normal Distance $z^+$', 'Interpreter', 'latex');
 ylabel('Raw $\overline{u}$', 'Interpreter', 'latex');
 
@@ -98,7 +137,36 @@ annotation('textbox', [0.1, 0.01, 0.8, 0.1], ... % [左，下，宽，高]
     'FontSize', 10, ...
     'Interpreter', 'none');
 
-%保存图像
+%% 绘制处理后的速度剖面对比图
+close all
+
+figure;
+sgtitle(['$Re_\tau = $',num2str(Re_tau)],'Interpreter', 'latex');
+% 设置全局边距（单位为归一化坐标，范围[0,1]）
+% [左，下，右，上]的边距
+bottom_margin = 0.15; % 增加底部边距
+subplot_margin = 0.05; % 子图之间的间距
+
+% 调整子图位置
+% subplot(1,2,1);
+% set(gca, 'Position', [0.1, 0.1, 0.4, 0.8]); % [左，下，宽，高]
+semilogx(zpos_delta*Re_tau, squeeze(u_mean),'-x',DisplayName=['Velocity profile, $Re_\tau = $',num2str(Re_tau)],LineWidth=2);
+hold on 
+semilogx(zpos_delta*Re_tau,log(zpos_delta*Re_tau)/0.41+5,DisplayName='Log Law, $u^+=2.5\log(y^+)+5$');
+hold off
+legend(Interpreter="latex",Location="southeast")
+xlabel('Wall-normal Distance $z^+$', 'Interpreter', 'latex');
+ylabel('$\overline{u^+}$', 'Interpreter', 'latex');
+% 
+% subplot(1,2,2);
+% set(gca, 'Position', [0.6, 0.1, 0.4, 0.8]);
+% semilogx(zpos_delta*Re_tau, squeeze(w_mean));
+% xlabel('Wall-normal Distance $z^+$', 'Interpreter', 'latex');
+% ylabel('$\overline{w^+}$', 'Interpreter', 'latex');
+
+
+%% 保存图像
     figure_name = ['Re_tau = ',num2str(Re_tau),'.pdf'];
     filename = fullfile(pwd,figure_name);
     exportgraphics(gcf, filename, 'ContentType', 'vector');
+    close all;
