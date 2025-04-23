@@ -15,17 +15,44 @@ hold on
 plot(re_7810.di_less_dia,re_7810.pdf,'bx',"LineWidth",2,"DisplayName",'Re = 7810 (Exp.)')
 hold on
 
+    fixed_edges = linspace(0.1,3,50);
+
 
 if (1)%液滴分裂可追踪
     initial_value = 0.2*ones(1,1);
     threshold = data.critical_value(1);
-    ratio = [0.01,2e-5];%固定比例分裂时此比例需小于0.5，随机比例分裂时可以为0-1的任意子区间，gamma随机比例时为输入为[均值,方差]
+    ratio = [2,18];%固定比例分裂时此比例需小于0.5，随机比例分裂时可以为0-1的任意子区间，gamma随机比例时为输入为[均值,方差],beta分布时为alpha,beta
     tic
-    compressed_data = compress_data_process(initial_value, threshold,ratio);%第一次分裂
+    compressed_data = compress_data_process(initial_value, threshold,ratio);
     toc
     dat = reconstruct_data(compressed_data);
     di_less_dat = dat/mean(dat);
-    histogram(di_less_dat,15,"Normalization","pdf","DisplayName",'Theory');
+    % figure('Visible', 'off'); %创建隐藏图形
+    line([threshold/mean(dat) threshold/mean(dat)],[max(re_7810.pdf) min(re_7810.pdf)],'linewidth',2,"DisplayName",'Critical Value');
+    h_temp = histogram(di_less_dat,fixed_edges,"Normalization","pdf","DisplayName",'Theory, no Coalesce');
+    
+    % res.binvalues{1} = h_temp.Values;
+    % err = 1;
+    % last_bins = 0;
+    % iter = 1;
+    % while(err>1e-5&&iter<300)
+    % 
+    %     %开始合并
+    %     dat = probabilistic_merge(dat, threshold);
+    %     %再次分裂
+    %     compressed_data = compress_data_process(dat, threshold,ratio);
+    %     dat = reconstruct_data(compressed_data);
+    %     di_less_dat = dat/mean(dat);
+    %     % line([threshold/mean(dat) threshold/mean(dat)],[max(re_7810.pdf) min(re_7810.pdf)],'linewidth',2);
+    %     h1 = histogram(di_less_dat,fixed_edges,"Normalization","pdf","DisplayName",'Theory, with Coalesce');
+    % 
+    %     err = norm(last_bins-h1.Values);
+    %     e(iter) = err;
+    %     last_bins = h1.Values;
+    %     iter = iter +1;
+    %     res.binvalues{iter} = h1.Values;
+    %     close(gcf);
+    % end
     hold on
     set(gca, 'YScale', 'log');
     legend();
@@ -44,7 +71,7 @@ else
     % figure;
     di_less_dat = dat/mean(dat);
     histogram(di_less_dat,15,"Normalization","pdf","DisplayName",'Theory');
-    hold on
+    hold off
 
     set(gca, 'YScale', 'log');
     legend();
@@ -149,7 +176,7 @@ function [processed_data] = compress_data_process(data, threshold,ratio)
     % 输出：
     %   processed_data - 处理后的[Nx2]矩阵，列1为值，列2为对应计数
     
-    if(length(ratio)==1)
+    if(isscalar(ratio))
         split_rule = @(x) deal(x*(1-ratio)^(1/3), x*ratio^(1/3));  %分裂规则
     elseif(length(ratio)==2)
         disp('使用随机分裂。');
@@ -175,7 +202,7 @@ function [processed_data] = compress_data_process(data, threshold,ratio)
     iteration = 0;%进度计算器
     while has_changes
         iteration = iteration + 1;%进度计算器
-        fprintf('正在进行第 %d 次迭代...\n', iteration);
+        % fprintf('正在进行第 %d 次迭代...\n', iteration);
 
         has_changes = false;
         new_data = [];
@@ -186,16 +213,34 @@ function [processed_data] = compress_data_process(data, threshold,ratio)
             
             if val > threshold
                 % ================= 分裂规则区域 ======================
-                if(length(ratio)==1)
+                if(isscalar(ratio))
                     [split_val1, split_val2] = split_rule(val);
                 elseif(length(ratio)==2)
-                    % ratio_val = ratio(1)+(ratio(2)-ratio(1))*rand(1);%采用均匀分布
-                    ratio_val = 1;%采用gamma分布,大于1小于0的不考虑
-                    while (abs(ratio_val-0.5)>=0.5)%采用gamma分布,大于1小于0的不考虑
-                        theta_gamma = ratio(2)/ratio(1);
-                        k_gamma = ratio(1)/theta_gamma;
-                        ratio_val = gamrnd(k_gamma, theta_gamma, 1, 1);%采用gamma分布,大于1小于0的不考虑
-                    end%采用gamma分布,大于1小于0的不考虑
+                    % 采用均匀分布
+                        % ratio_val = ratio(1)+(ratio(2)-ratio(1))*rand(1);
+                    % 采用均匀分布
+
+                    % 采用gamma分布,大于1小于0的不考虑
+                        % ratio_val = 1;
+                        % while (abs(ratio_val-0.5)>=0.5)
+                        %     theta_gamma = ratio(2)/ratio(1);
+                        %     k_gamma = ratio(1)/theta_gamma;
+                        %     ratio_val = gamrnd(k_gamma, theta_gamma, 1, 1);
+                        % end
+                    % 采用gamma分布,大于1小于0的不考虑
+
+                    % 采用自定义对称beta分布
+                        a = ratio(1);
+                        b = 5*(val/threshold);%ratio(2);    
+                        % y = (betapdf(x, a, b)+betapdf(1-x, a, b))/2;
+                        % figure;
+                        % plot(x, y, 'LineWidth', 2.5, ...
+                        %     'LineStyle', styles{mod(i-1,numel(styles))+1}, ...
+                        %     'Color', colors(i,:), ...
+                        %     'DisplayName', sprintf('α=%.1f, β=%.1f',a,b));
+
+                        ratio_val = custom_beta_rnd(a,b,1);
+                    % 采用自定义对称beta分布
 
                     split_val1 = val*(1-ratio_val)^(1/3);
                     split_val2 = val*ratio_val^(1/3);
@@ -317,7 +362,50 @@ function [dat, iter] = independent_split(n, xu_threshold,p,q)
 
 end
 
+function new_data = probabilistic_merge(data, threshold)
+    %液滴合并
+    current_data = data;
+    i = 1;
 
+    
+    
+    while i <= length(current_data)
+        % 获取当前元素
+        current_element = current_data(i);
+        
+        % 获取其他元素的索引
+        other_indices = setdiff(1:length(current_data), i);
+        
+        if ~isempty(other_indices)
+            % 随机选择一个其他元素
+            j = other_indices(randi(length(other_indices)));
+            selected_element = current_data(j);
+            
+            merge_prob = 0.01*((selected_element/threshold)+(current_element/threshold));
+            % 根据概率决定是否合并
+            if rand() < merge_prob
+                % 创建新元素
+                merged_element = (current_element^3 + selected_element^3)^(1/3);
+                
+                % 创建新数组
+                mask = true(1, length(current_data));
+                mask([i, j]) = false;
+                current_data = [current_data(mask); merged_element];
+                
+                % 重置索引，因为数组结构已改变
+                i = max(1, i-1); % 后退一步以处理新元素
+            else
+                % 不合并则处理下一个元素
+                i = i + 1;
+            end
+        else
+            % 没有其他元素可合并时退出
+            break;
+        end
+    end
+    
+    new_data = current_data;
+end
 
 
 

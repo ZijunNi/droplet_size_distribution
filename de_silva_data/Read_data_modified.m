@@ -9,7 +9,7 @@ V_ALL = load_data.V_ALL;%/utau_est;
 W_ALL = load_data.W_ALL;%/utau_est;
 Num_layers = 1:6;
 
-n = 1;%累加的层数
+n =  1;%累加的层数
 
 % while(n<6)
 %     n = n +1;
@@ -48,13 +48,10 @@ utau_est = sqrt(-min(profile));
 % profile = profile/utau_cal^2;
 %%
 % begin_pos = 2^(7-n)+5;
-% 计算所有z+值
+
+
 z_plus = squeeze(z_frame(1,1,:)) * Re_tau;
-
-% 确定对数区范围：30 < z+ < 0.1*Re_tau
 logical_region = (z_plus > 50) & (z_plus < max(0.1 * Re_tau,60));
-
-% 提取符合条件的索引
 indices = find(logical_region);
 p_lin = polyfit(log(z_plus(indices)), squeeze(u_mean(indices)), 1);
 % p_lin = polyfit(log(squeeze(z_frame(1,1,begin_pos:begin_pos+3))*Re_tau),squeeze(u_mean(begin_pos:begin_pos+3)),1);  % 2:5 corresponds to the range in the mean flow profile I fit too
@@ -63,7 +60,7 @@ plot([1 Re_tau],polyval(p_lin,log([1 Re_tau])),'--k');
 plot([1 Re_tau],polyval([2.5 p_lin(2)],log([1 Re_tau])),'--b');
 Uinf_est = 5-p_lin(2);
 % get Uinf estimates
-Uinf = polyval([2.5 1.8],log(Re_tau));
+Uinf = polyval([2.5 5],log(Re_tau));
 % U_ALL = U_ALL +Uinf;
 
 %%
@@ -154,9 +151,31 @@ semilogx(zpos_delta*Re_tau, squeeze(u_mean),'-x',DisplayName=['Velocity profile,
 hold on 
 semilogx(zpos_delta*Re_tau,log(zpos_delta*Re_tau)/0.41+5,DisplayName='Log Law, $u^+=2.5\log(y^+)+5$');
 hold off
+
+% 创建文本标注内容（使用sprintf格式化输出）
+text_content = {
+    sprintf('Utau =   %.6f', utau_est),  % 第一行
+    sprintf('Uinf  = %.6f', Uinf)   % 第二行
+};
+
+% 在左上角添加文本标注（使用归一化坐标定位）
+text(0.03, 0.95, text_content,...
+    'Units', 'normalized',...         % 使用归一化坐标系
+    'VerticalAlignment', 'top',...    % 顶部对齐
+    'HorizontalAlignment', 'left',... % 左对齐
+    'BackgroundColor', [1 1 1],...    % 白色背景
+    'EdgeColor', 'k',...              % 黑色边框
+    'Margin', 3,...                   % 文本边距
+    'FontSize', 10,...                % 字号大小
+    'FontName', 'Consolas');          % 等宽字体更美观
+
+% 调整坐标区域使文本不被遮挡（可选）
+set(gca, 'Position', [0.15 0.15 0.75 0.75]);
+
 legend(Interpreter="latex",Location="southeast")
 xlabel('Wall-normal Distance $z^+$', 'Interpreter', 'latex');
 ylabel('$\overline{u^+}$', 'Interpreter', 'latex');
+
 % 
 % subplot(1,2,2);
 % set(gca, 'Position', [0.6, 0.1, 0.4, 0.8]);

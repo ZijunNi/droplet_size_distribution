@@ -26,8 +26,8 @@ W = sum(W_ALL,4)/utau_est;
 save("example_data.mat","U","V","W","zpos_delta","xpos_delta","ypos_delta")%,"utau_est","Uinf")
 
 % Test plots
-% figure;imagesc(xpos_delta,zpos_delta,squeeze(U(1,:,:))'); daspect([1 1 1]);set(gca,'ydir','normal') % Streamwise - wall normal plane (rotated)
-% figure;imagesc(xpos_delta,ypos_delta,squeeze(U(:,:,5))'); daspect([1 1 1]); %  wall parallel plane 
+figure;imagesc(xpos_delta,zpos_delta,squeeze(U(1,:,:))'); daspect([1 1 1]);set(gca,'ydir','normal') % Streamwise - wall normal plane (rotated)
+figure;imagesc(xpos_delta,ypos_delta,squeeze(U(:,:,5))'); daspect([1 1 1]); %  wall parallel plane 
 
 %%
 figure;
