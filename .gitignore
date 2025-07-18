@@ -9,8 +9,8 @@ other_files/
 !doc/*.png
 
 de_silva_data/*.pdf
-split/*.pdf
-
+*.pdf
+*.ai
 *.mat
 
 

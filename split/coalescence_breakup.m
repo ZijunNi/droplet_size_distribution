@@ -1,6 +1,6 @@
 clear,clc,close all;
 % 导入数据
-re_tau = 180;
+re_tau = 1000;
 filename = ['../data_',num2str(re_tau),'/Re_tau = ',num2str(re_tau),'.mat'];
 load(filename)
 
@@ -12,43 +12,53 @@ re_7810.pdf = [0.9895	1.21899	1.02616	0.8493	1.00889	0.8493	0.71496	0.80128	0.60
 
 
 %%%%%%%%%% 可调参数：初始状态和程序设置 %%%%%%%%%%
-initial_size = 10*data.critical_value(1)*rand(20,1);% 初始液滴大小分布
-num_steps = 2000;                                   % 步数
-output_step = round(num_steps/100);                 % 结果输出间隔
+initial_size = 1+rand(1,100);                                                    % 初始液滴大小分布
+num_steps = 500;                                               % 最大步数
+output_step = round(num_steps/100);            % 结果输出间隔
 %%%%%%%%%% 可调参数：初始状态和程序设置 %%%%%%%%%%
 
+
+index_eta = 1;
+
+% for index_eta = 1:4
+
 % 确保离散相总体积不变
-fixed_total_volume = (20*data.critical_value(1))^(3);% 固定总体积为8000*V_crit
+% phi = 0.01;
+% total_volume_of_domain = pi()*(3.5^2-2.5^2)*7.5;% Sun Chao 实验中的装置总体积
+fixed_total_volume = (15*data.critical_value(1))^3;%0.01*pi()*(3.5^2-2.5^2)*7.5;% 固定总体积为0.01*总体积，总体积来自Sun Chao实验中的装置总体积
 total_volume = sum(initial_size.^3);
 normalized_size = initial_size./(total_volume^(1/3));
-initial_size = normalized_size*(fixed_total_volume)^(1/3);
-% 已验证：最终平均直径与离散相总体积有关
+initial_size = normalized_size*(fixed_total_volume)^(1/3);% 已验证：最终平均直径与离散相总体积有关
 
+initial_size = initial_size/data.critical_value(index_eta);% 初始尺寸归一化
 
+clear history_mean_std history history_mean_size history_mean droplets
 
-
-break_threshold = data.critical_value(1);  % 破碎尺寸阈值
+break_threshold = 1;%data.critical_value(index_eta);  % 破碎尺寸阈值，归一化后为1
 % 初始化液滴系统
 droplets = initial_size;
 history = cell(num_steps+1, 1);
 history{1} = droplets;
 
+tic
 % 主循环
 num_met = 0;
-for step = 1:num_steps
+steps = 1;
+break_record = [];
+while (steps < num_steps)
     % 破碎过程
     new_droplets = [];
     for i = 1:length(droplets)
         s = droplets(i);
-        if s > break_threshold
 
+        if s > break_threshold
+            % break_record = [break_record, s];
             %%%%%%%%%% 可调参数：分裂比例模型 %%%%%%%%%%
             a = 2;
-            b = 10*s/break_threshold;%ratio(2);    
+            % b = 10*s;
+            % ratio_val = custom_beta_rnd(a,b,1);
+            ratio_val = calculate_ratio_value(s/break_threshold,re_tau);%custom_beta_rnd(a,b,1);
             %%%%%%%%%% 可调参数：分裂比例模型 %%%%%%%%%%
-
-            ratio_val = custom_beta_rnd(a,b,1);
-            % 采用自定义对称beta分布
             
             split_val1 = s*(1-ratio_val)^(1/3);
             split_val2 = s*ratio_val^(1/3);
@@ -59,6 +69,9 @@ for step = 1:num_steps
     end
     droplets = new_droplets;
     
+
+
+
     % 考虑所有可能配对
     n = length(droplets);
     if n >= 2
@@ -66,22 +79,22 @@ for step = 1:num_steps
         [i,j] = find(triu(ones(n),1));
         pairs = [i,j];
         pairs = pairs(randperm(size(pairs,1)),:);
-        
+
         merged = false(1,n);
         new_droplets_agg = [];
-        
+
         % 遍历所有可能配对
         for k = 1:size(pairs,1)
             idx1 = pairs(k,1);
             idx2 = pairs(k,2);
-            
+
             if ~merged(idx1) && ~merged(idx2)
                 s1 = droplets(idx1);
                 s2 = droplets(idx2);
-                
+
                 % 计算聚合概率
                 %%%%%%%%%% 可调参数：聚合概率模型 %%%%%%%%%%
-                prob = aggregation_prob(s1, s2, break_threshold);
+                [prob, K] = aggregation_prob(s1, s2, break_threshold,re_tau);
                 %%%%%%%%%% 可调参数：聚合概率模型 %%%%%%%%%%
                 if rand() < prob
                     % 成功聚合
@@ -91,25 +104,31 @@ for step = 1:num_steps
                 end
             end
         end
-        
+
         % 添加未聚合的液滴
         droplets = [new_droplets_agg, droplets(~merged)];
     end
+
+    if(length(droplets)<100)% 液滴群未破碎完全
+        warning('液滴群规模过小，重新执行破碎。')
+        steps = 1;
+        continue;
+    end
     
     % 记录当前状态
-    history{step+1} = droplets;
-    num_droplets(step) = length(droplets);
-    history_mean(step) = mean(num_droplets);
+    history{steps+1} = droplets;
+    num_droplets(steps) = length(droplets);
+    history_mean(steps) = mean(num_droplets);
 
-    history_mean_size(step) = mean(droplets);
-    history_mean_std(step) = std(droplets);
+    history_mean_size(steps) = mean(droplets);
+    history_mean_std(steps) = std(droplets);
 
-    % 退出条件：连续多步以上标准差小于均值的百分之一
-    if(step>output_step)
+    % 退出条件：连续100步以上标准差小于均值的百分之一
+    if(steps>output_step)
         error = std(num_droplets(end-output_step:end));
         criteria = 0.01*mean(num_droplets(end-output_step:end));
         
-        if (error < criteria&&num_met>floor(num_steps/100))
+        if (error < criteria&&num_met>20)% 退出条件：连续100步以上标准差小于均值的百分之一
             break; 
         elseif(error < criteria)
             num_met = num_met + 1;
@@ -122,60 +141,41 @@ for step = 1:num_steps
 
 
     % 阶段性输出
-    if mod(step, output_step) == 0
-        fprintf('Step %d: %d droplets, Error: %.5e\n',...
-                step, length(droplets),error);
+    if mod(steps, output_step) == 0
+        fprintf('Step %d: %d droplets, Error: %.5e, Mean value: %.5e\n',...
+                steps, length(droplets),error,mean(droplets));
     end
+    steps = steps+1;
 end
+toc
+history(cellfun(@isempty,history))=[];
 
 %% 绘图
-final_sizes = droplets;
-figure;
-subplot(3,1,1);
-normalized_final_sizes = final_sizes/mean(final_sizes);
-h = histogram(normalized_final_sizes,"Normalization","pdf",DisplayName='Theory');
-hold on
-line([break_threshold/mean(final_sizes) break_threshold/mean(final_sizes)],[0.01 1],'linewidth',2,Displayname='Critical Value');
-plot(re_5210.di_less_dia,re_5210.pdf,'rx',"LineWidth",2,"DisplayName",'Re = 5210 (Exp.)')
-hold on
-plot(re_7810.di_less_dia,re_7810.pdf,'bx',"LineWidth",2,"DisplayName",'Re = 7810 (Exp.)')
-hold off
-set(gca, 'YScale', 'log');
-legend();
-title(['Final Droplets Size Distribution with Mean Value = ',num2str(mean(final_sizes))]);
-xlabel('Droplet Size $D/\langle D\rangle$','Interpreter','latex');
-ylabel('PDF');
-
-
-subplot(3,1,2);
-
-plot(1:length(num_droplets), num_droplets, '-o');
-% hold on
-% plot(1:length(num_droplets), history_mean, '-r',LineWidth=1);
-% title('液滴数量演化');
-xlabel('Steps');
-ylabel('Numbers of Droplets');
-grid on;
-
-subplot(3,1,3);
-semilogy(1:length(num_droplets), history_mean_size, '-x',DisplayName='Mean Droplets Size');
-hold on
-semilogy(1:length(num_droplets), history_mean_std, '-o',DisplayName='Std. Deviation of Droplets Size');
-hold off
-legend();
-title('Statisitic Values');
-xlabel('Steps');
-ylabel('Statistic Values');
-grid on;
-
-
-
-% 自定义聚合概率函数 
-function p = aggregation_prob(s1, s2, break_threshold)
-    v1 = (s1/break_threshold)^3;
-    v2 = (s2/break_threshold)^3;
-    % 基础概率与尺寸乘积成正比，保证小液滴聚合概率低
-    % p = min(0.0005, 0.01*(s1/breakiyou_threshold)*(s2/break_threshold));  % 2358.mat
-    p = 0.0001*(v1^(2/3) + v2^(2/3))*sqrt(v1^(2/9)+v2^(2/9));%Coulaloglou C A, Tavlarides L L. Description of interaction processes in agitated liquid-liquid dispersions[J]. Chemical Engineering Science, 1977, 32(11): 1289-1297.
-
+if(1)
+    M = 20;
+    S = 1; 
+    plot_droplets_stat(history,M,S,1);
 end
+
+%% 保存
+
+% 定义需要保存的变量名称（根据实际情况修改）
+targetVars = {'a', 'history', 'K','index_eta','re_tau','data'}; % 替换为你的变量名
+
+% 生成格式化的时间字符串（安全文件名格式：YYYY-MM-DD_HH-MM-SS）
+timeStr = datestr(datetime('now'), 'yyyy-mm-dd_HH-MM-SS');
+fileName = ['auto_saved_data_', timeStr, '.mat'];
+
+savePath = ['./data_re_tau_',num2str(re_tau)];  % 修改为你的目标路径
+filePath = fullfile(savePath, fileName);
+save(filePath, targetVars{:});
+% 显示保存信息
+fprintf('变量已保存至文件: %s\n', fileName);
+disp('保存变量列表:');
+disp(targetVars);
+
+% end
+
+
+
+

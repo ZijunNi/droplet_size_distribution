@@ -26,7 +26,11 @@ function result = extract_2d_slice_x_interp(A, z, zq, re_tau)
 
     else
         %Linear interpolation
-        z = [0;z];
+        % size(z)
+        if(zq(1)>1e-8)
+            z = [0;z(:)];
+            c = c + 1;
+        end
         A = cat(3, zeros(a,b), A);
         result = interpolateLayer(A, z, zq, a, b, c);
     end

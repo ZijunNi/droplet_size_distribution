@@ -16,9 +16,22 @@ condition_function(u,v,dx,zpos_delta,Reynolds_number,ratio,diameter,rho_c)
         %-----使用0.8*U_inf作为u_bar
                 mid_line_loc = find(zpos_delta-1<=0,1,'last');%中线位置
                 mid_plane = squeeze(u(:,:,mid_line_loc));
-                u_bar = mean(mid_plane(:));
+                if(Reynolds_number == 180)
+                    u_bar = mean(mid_plane(:));
+                elseif(Reynolds_number == 200)
+                    u_bar = 18.534401289144565;% From CM de Silva dataset
+                elseif(Reynolds_number == 400)
+                    u_bar = 19.978661;% From CM de Silva dataset
+                elseif(Reynolds_number == 800)
+                    u_bar = 21.711529;% From CM de Silva dataset
+                elseif(Reynolds_number == 1600)
+                    u_bar = 23.444397;% From CM de Silva dataset
+                elseif(Reynolds_number == 1000)
+                    u_bar = 22.638488632724943;% JHTDB dataset
+                end
+                u_bar = 0.5*u_bar;
         %-----使用9.5*u_tau作为u_bar
-                % u_bar = 9.5*u_tau;
+                % u_bar =9.50*u_tau;
 
         physical_duration = duration.*delta/u_bar;%用当地流向速度将空间坐标转化为时间坐标
         physical_tau = calculate_tau(physical_duration,delta*diameter);% 计算破碎线

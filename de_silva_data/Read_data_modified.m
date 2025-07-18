@@ -9,7 +9,7 @@ V_ALL = load_data.V_ALL;%/utau_est;
 W_ALL = load_data.W_ALL;%/utau_est;
 Num_layers = 1:6;
 
-n =  1;%累加的层数
+n =  2;%累加的层数
 
 % while(n<6)
 %     n = n +1;
@@ -134,58 +134,68 @@ annotation('textbox', [0.1, 0.01, 0.8, 0.1], ... % [左，下，宽，高]
     'FontSize', 10, ...
     'Interpreter', 'none');
 
+
+%% 将平均场替换为满足law-of-wall的场
+
+U_prime = (U - u_mean); % 脉动分量 [Nx×Ny×Nz]
+
+u_mean_new = linspace(0,Re_tau,101);
+u_mean_new = reshape(u_mean_new, 1, 1, []);
+U_new = u_mean_new + U_prime; % [Nx×Ny×Nz]
+figure;imagesc(xpos_delta,ypos_delta,squeeze(U_new(:,:,2))'); daspect([1 1 1]); %  wall parallel plane 
+a = squeeze(U_new(:,:,2))';
+mean(a(:));
+%%
+U = U_new;
+save(['converted_de_silva_data_re_tau_',num2str(Re_tau),'.mat'],"U","V","W","xpos_delta","ypos_delta","zpos_delta");
+
 %% 绘制处理后的速度剖面对比图
-close all
-
-figure;
-sgtitle(['$Re_\tau = $',num2str(Re_tau)],'Interpreter', 'latex');
-% 设置全局边距（单位为归一化坐标，范围[0,1]）
-% [左，下，右，上]的边距
-bottom_margin = 0.15; % 增加底部边距
-subplot_margin = 0.05; % 子图之间的间距
-
-% 调整子图位置
-% subplot(1,2,1);
-% set(gca, 'Position', [0.1, 0.1, 0.4, 0.8]); % [左，下，宽，高]
-semilogx(zpos_delta*Re_tau, squeeze(u_mean),'-x',DisplayName=['Velocity profile, $Re_\tau = $',num2str(Re_tau)],LineWidth=2);
-hold on 
-semilogx(zpos_delta*Re_tau,log(zpos_delta*Re_tau)/0.41+5,DisplayName='Log Law, $u^+=2.5\log(y^+)+5$');
-hold off
-
-% 创建文本标注内容（使用sprintf格式化输出）
-text_content = {
-    sprintf('Utau =   %.6f', utau_est),  % 第一行
-    sprintf('Uinf  = %.6f', Uinf)   % 第二行
-};
-
-% 在左上角添加文本标注（使用归一化坐标定位）
-text(0.03, 0.95, text_content,...
-    'Units', 'normalized',...         % 使用归一化坐标系
-    'VerticalAlignment', 'top',...    % 顶部对齐
-    'HorizontalAlignment', 'left',... % 左对齐
-    'BackgroundColor', [1 1 1],...    % 白色背景
-    'EdgeColor', 'k',...              % 黑色边框
-    'Margin', 3,...                   % 文本边距
-    'FontSize', 10,...                % 字号大小
-    'FontName', 'Consolas');          % 等宽字体更美观
-
-% 调整坐标区域使文本不被遮挡（可选）
-set(gca, 'Position', [0.15 0.15 0.75 0.75]);
-
-legend(Interpreter="latex",Location="southeast")
-xlabel('Wall-normal Distance $z^+$', 'Interpreter', 'latex');
-ylabel('$\overline{u^+}$', 'Interpreter', 'latex');
-
+% close all
 % 
-% subplot(1,2,2);
-% set(gca, 'Position', [0.6, 0.1, 0.4, 0.8]);
-% semilogx(zpos_delta*Re_tau, squeeze(w_mean));
+% figure;
+% sgtitle(['$Re_\tau = $',num2str(Re_tau)],'Interpreter', 'latex');
+% bottom_margin = 0.15; % 增加底部边距
+% subplot_margin = 0.05; % 子图之间的间距
+% 
+% semilogx(zpos_delta*Re_tau, squeeze(u_mean),'-x',DisplayName=['Velocity profile, $Re_\tau = $',num2str(Re_tau)],LineWidth=2);
+% hold on 
+% semilogx(zpos_delta*Re_tau,log(zpos_delta*Re_tau)/0.41+5,DisplayName='Log Law, $u^+=2.5\log(y^+)+5$');
+% hold off
+% 
+% % 创建文本标注内容（使用sprintf格式化输出）
+% text_content = {
+%     sprintf('Utau =   %.6f', utau_est),  % 第一行
+%     sprintf('Uinf  = %.6f', Uinf)   % 第二行
+% };
+% 
+% % 在左上角添加文本标注（使用归一化坐标定位）
+% text(0.03, 0.95, text_content,...
+%     'Units', 'normalized',...         % 使用归一化坐标系
+%     'VerticalAlignment', 'top',...    % 顶部对齐
+%     'HorizontalAlignment', 'left',... % 左对齐
+%     'BackgroundColor', [1 1 1],...    % 白色背景
+%     'EdgeColor', 'k',...              % 黑色边框
+%     'Margin', 3,...                   % 文本边距
+%     'FontSize', 10,...                % 字号大小
+%     'FontName', 'Consolas');          % 等宽字体更美观
+% 
+% % 调整坐标区域使文本不被遮挡（可选）
+% set(gca, 'Position', [0.15 0.15 0.75 0.75]);
+% 
+% legend(Interpreter="latex",Location="southeast")
 % xlabel('Wall-normal Distance $z^+$', 'Interpreter', 'latex');
-% ylabel('$\overline{w^+}$', 'Interpreter', 'latex');
-
-
-%% 保存图像
-    figure_name = ['Re_tau = ',num2str(Re_tau),'.pdf'];
-    filename = fullfile(pwd,figure_name);
-    exportgraphics(gcf, filename, 'ContentType', 'vector');
-    close all;
+% ylabel('$\overline{u^+}$', 'Interpreter', 'latex');
+% 
+% % 
+% % subplot(1,2,2);
+% % set(gca, 'Position', [0.6, 0.1, 0.4, 0.8]);
+% % semilogx(zpos_delta*Re_tau, squeeze(w_mean));
+% % xlabel('Wall-normal Distance $z^+$', 'Interpreter', 'latex');
+% % ylabel('$\overline{w^+}$', 'Interpreter', 'latex');
+% 
+% 
+% %% 保存图像
+%     figure_name = ['Re_tau = ',num2str(Re_tau),'.pdf'];
+%     filename = fullfile(pwd,figure_name);
+%     exportgraphics(gcf, filename, 'ContentType', 'vector');
+%     % close all;
