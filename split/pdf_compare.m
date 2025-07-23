@@ -101,13 +101,14 @@ title('Generated Samples vs Target PDF');
     % v2 = (s2/break_threshold)^3;
 
     num_points = 200;
-v1 = linspace(0.1 , 10, num_points);    % 避免 T_i <= Delta_t
-v2 = linspace(0.1 , 10, num_points);% 避免 tau_p <= Delta_t
-[v1_grid, v2_grid] = meshgrid(v1, v2);
-
+v1 = linspace(-2 , 2, num_points);   
+v2 = linspace(-2 , 2, num_points);
+[v1_grid, v2_grid] = (meshgrid(v1, v2));
+v1_grid = 10.^(v1_grid);
+v2_grid = 10.^(v2_grid);
 % 自定义聚合概率函数 
 
-
+break_threshold = 0.0141276673007496;
     %%%%%%% 实验参数 %%%%%%%
     Re_tau = 180;
     delta = 0.5e-2;
@@ -118,9 +119,10 @@ v2 = linspace(0.1 , 10, num_points);% 避免 tau_p <= Delta_t
     %%%%%%% 实验参数 %%%%%%%
 
     %%%%%%% 模型参数 %%%%%%%
-        K_1 = 3e-4;
-        K_2 = 3e-4;
-        K_3 = 5e-3;
+        K_1 = 10;%2e-4
+        K_2 = 50;
+        K_3 = 9;
+        K = [K_1,K_2,K_3];
     %%%%%%% 模型参数 %%%%%%%
     
     % for i = 1:num_points
@@ -136,18 +138,33 @@ v2 = linspace(0.1 , 10, num_points);% 避免 tau_p <= Delta_t
 % 预分配结果矩阵
 result_p = zeros(size(v1_grid));
 
+
+
+
 % 逐点计算表达式值
 for i = 1:num_points
     for j = 1:num_points
         dissipation = Re_tau^3*nu_c^3/delta^4;
         v = sqrt(v1_grid(i,j)*v2_grid(i,j));
-        breakup_rate = v^(-2/9)*dissipation^(1/3)*exp(-K_3*sigma/(rho_d*dissipation^(2/3)*v^(5/9)));
-        collision = K_1*(v1_grid(i,j).^(2/3) + v2_grid(i,j).^(2/3)).*sqrt(v1_grid(i,j).^(2/9)+v2_grid(i,j).^(2/9))*Re_tau*nu_c/(delta^(4/3));
-        efficiency = exp(-K_2*nu_c^4*rho_c^2*Re_tau^3*(v1_grid(i,j).^(1/3).*v2_grid(i,j).^(1/3)./(v1_grid(i,j).^(1/3)+v2_grid(i,j).^(1/3))).^4/(sigma^2*delta^4));
+        v1 = v1_grid(i,j);
+        v2 = v2_grid(i,j);
         
-        result_p(i,j) = collision.*efficiency/breakup_rate;
+            collision = K_1*break_threshold^(7/3)*(v1^(2/3) + v2^(2/3))*sqrt(v1^(2/9)+v2^(2/9))*dissipation^(1/2);
+            efficiency = exp(-K_2*break_threshold^(4)*nu_c*rho_c^2*dissipation*(v1^(1/3)*v2^(1/3)/(v1^(1/3)+v2^(1/3)))^4/(sigma^2));
+            breakup_rate = exp(-K_3*sigma/(rho_d*break_threshold^(5/3)*dissipation^(2/3)*v^(5/9)));
+
+    if(K_2==0&&K_3==0)
+        p = collision;
+    elseif(K_3==0)
+        p = collision*efficiency;
+    else
+        p = collision*efficiency/breakup_rate;
+    end
+        
+        result_p(i,j) = p;
     end
 end
+result_p = log10(result_p);
     % figure;
     % clf;
 mesh(v1_grid, v2_grid, result_p);%Coulaloglou C A, Tavlarides L L. Description of interaction processes in agitated liquid-liquid dispersions[J]. Chemical Engineering Science, 1977, 32(11): 1289-1297.

@@ -1,75 +1,61 @@
 clear,clc
 %% 体积分数验证
+clear,clc
 
-
-subplot(1,2,1)
 M = 100;S = 1;
-edges = [0.02:0.05:0.78,0.9,1,1.19, 1.2:0.1:3, inf];
+% edges = [0.02:0.05:0.78,0.9,1,1.19, 1.2:0.1:3, inf];
+lineStyles = {':', '--', '-.'}; % 线型库，确保数量 >= n
 
-file_name = 'data_re_tau_180_28_Jun_2025_23_53_32';
-load(['./data_re_tau_180/',file_name,'.mat'])
-N = length(history);
-start_idx = max(1, N - S*(M-1));  % 防止索引小于1
-selected_history = history(start_idx:S:N);
-final_sizes = cell2mat(selected_history');
-% mean(final_sizes) = mean(final_sizes);
-normalized_final_sizes = final_sizes*1.1 / mean(final_sizes);
-mean_value(1) = mean(final_sizes);
-[counts, edges] = histcounts(normalized_final_sizes, edges, "Normalization", "pdf");
-centers = edges(1:end-1) + diff(edges)/2;
-plot(centers, counts,'-.','Color',[0.2 0 0] , 'LineWidth', 1.5,'DisplayName','$\phi=1\%$');
-hold on
+folderPath = 'data_re_tau_180';
+prefix = 'auto_saved_data_2025-07-20';
+fileList = dir(fullfile(folderPath, [prefix, '*']));
 
-file_name = 'data_re_tau_180_29_Jun_2025_00_12_17';
-load(['./data_re_tau_180/',file_name,'.mat'])
-N = length(history);
-start_idx = max(1, N - S*(M-1));  % 防止索引小于1
-selected_history = history(start_idx:S:N);
-final_sizes = cell2mat(selected_history');
-% mean(final_sizes) = mean(final_sizes);
-normalized_final_sizes = final_sizes*1.1 / mean(final_sizes);
-mean_value(2) = mean(final_sizes);
 
-[counts, edges] = histcounts(normalized_final_sizes, edges, "Normalization", "pdf");
-centers = edges(1:end-1) + diff(edges)/2;
-plot(centers, counts,'-.','Color',[0.4 0 0] , 'LineWidth', 1.5,'DisplayName','$\phi=5\%$');
-hold on
+% 检查是否找到文件
+if isempty(fileList)
+    warning('未找到以 "%s" 开头的文件', prefix);
+    return;
+end
 
-file_name = 'data_re_tau_180_29_Jun_2025_00_50_40';
-load(['./data_re_tau_180/',file_name,'.mat'])
-N = length(history);
-start_idx = max(1, N - S*(M-1));  % 防止索引小于1
-selected_history = history(start_idx:S:N);
-final_sizes = cell2mat(selected_history');
-% mean(final_sizes) = mean(final_sizes);
-normalized_final_sizes = final_sizes*1.1 / mean(final_sizes);
-mean_value(3) = mean(final_sizes);
+% 遍历所有匹配的文件
+validCount = 0;
+for i = 1:length(fileList)
+    % 跳过文件夹
+    if fileList(i).isdir
+        continue;
+    end
+    
+    % 获取完整文件路径
+    filePath = fullfile(fileList(i).folder, fileList(i).name);
+    
 
-[counts, edges] = histcounts(normalized_final_sizes, edges, "Normalization", "pdf");
-centers = edges(1:end-1) + diff(edges)/2;
-plot(centers, counts,'-.','Color',[0.6 0 0] , 'LineWidth', 1.5,'DisplayName','$\phi=10\%$');
-hold on
+        % 读取文件内容 (自动处理文本/二进制)
+        load(filePath);
+        % if fid == -1
+        %     error('无法打开文件: %s', filePath);
+        % end
 
-file_name = 'data_re_tau_180_29_Jun_2025_02_31_00';
-load(['./data_re_tau_180/',file_name,'.mat'])
-N = length(history);
-start_idx = max(1, N - S*(M-1));  % 防止索引小于1
-selected_history = history(start_idx:S:N);
-final_sizes = cell2mat(selected_history');
-% mean(final_sizes) = mean(final_sizes);
-normalized_final_sizes = final_sizes*1.1 / mean(final_sizes);
-mean_value(4) = mean(final_sizes);
+        N = length(history);
+        start_idx = max(1, N - S*(M-1));  % 防止索引小于1
+        selected_history = history(start_idx:S:N);
+        final_sizes = cell2mat(selected_history');
+        % mean(final_sizes) = mean(final_sizes);
+        normalized_final_sizes = final_sizes*1.1 / mean(final_sizes);
+        mean_value(1) = mean(final_sizes);
+        [counts, edges] = histcounts(normalized_final_sizes, "Normalization", "pdf");
+        centers = edges(1:end-1) + diff(edges)/2;
+         lineStyle = lineStyles{mod(i-1, numel(lineStyles)) + 1};
+        plot(centers, counts,'LineStyle',lineStyle,'Color',[mod(0.8*i,1) 0 0] , 'LineWidth', 1.5,'DisplayName',['$\phi=',num2str(phi),'\%$']);
+        hold on
+        
+        
 
-[counts, edges] = histcounts(normalized_final_sizes, edges, "Normalization", "pdf");
-centers = edges(1:end-1) + diff(edges)/2;
-plot(centers, counts,'-.','Color',[0.8 0 0] , 'LineWidth', 1.5,'DisplayName','$\phi=20\%$');
-hold on
-
+end
 
 
 % 设置坐标轴
 set(gca, 'YScale', 'log');
-legend('Location', 'southeast', 'Interpreter', 'latex');
+legend('Location', 'northeast', 'Interpreter', 'latex');
 % title(sprintf('Final Droplet Size Distribution \n Mean Size = %.5e and %6d Droplets', mean(final_sizes),length(final_sizes)));
 xlabel('Normalized Droplet Size $D/\langle D\rangle$', 'Interpreter', 'latex');
 ylabel('Probability Density', 'Interpreter', 'latex');
@@ -77,12 +63,12 @@ ylim([0.005 1.5]);
 xlim([0 3])
 % text(0,1.2,'(b)',Interpreter='latex',FontSize=20)
 daspect([1/(1.5-0.005) (1/3) 1])
-
-subplot(1,2,2)
-plot([0.01,0.05,0.1,0.2],mean_value,'o','Color',[0.8 0 0] , 'LineWidth', 1.5,'DisplayName','$\phi=20\%$');
-ylim([0.013 0.022]);
-xlim([0 0.3])
-daspect([1/(0.022-0.013) (1/0.3) 1])
+% 
+% subplot(1,2,2)
+% plot([0.01,0.05,0.1,0.2],mean_value,'o','Color',[0.8 0 0] , 'LineWidth', 1.5,'DisplayName','$\phi=20\%$');
+% ylim([0.013 0.022]);
+% xlim([0 0.3])
+% daspect([1/(0.022-0.013) (1/0.3) 1])
 
 
 

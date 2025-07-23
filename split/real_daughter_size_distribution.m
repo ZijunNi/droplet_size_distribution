@@ -1,7 +1,7 @@
 clear,clc
 
-d = 4.5*1.157e-3*1e-2;       % 气泡直径
-re_tau = 1000;
+d = 6*1.37e-2*1e-2;       % 气泡直径
+re_tau = 180;
 delta = 5e-3;
 visc = 2.4e-6;
 epsilon_est = re_tau^4*visc^3/delta^4;% 用近壁面visc*(du/dy)^2进行估计
@@ -25,8 +25,8 @@ title(['Daughter Size Distribution ($d=',num2sci(d*1e+3,3),'$mm, ' ...
 xlabel('$f_v$',Interpreter='latex')
 ylabel('$\beta(f_v;d,\epsilon)$',Interpreter='latex')
 %%
-% 调用函数进行5阶多项式拟合并计算积分
-poly_coeff = polynomial_fit_and_integral(x, y, 17, 1);
+% 调用函数进行多项式拟合并计算积分
+poly_coeff = polynomial_fit_and_integral(x, y, 22, 1);
 
 
 % 生成10000个随机数

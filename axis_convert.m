@@ -35,7 +35,7 @@ test_pixels = [px_input',py_input';];
 
 % DNS datasets 
 my_data_x = [6.6422e+03,58211.0249469943]';
-my_data_y = [1.29766e-2,10.9e-4]';
+my_data_y = [1.32766e-2,10.9e-4]';
 % de Silva Datasets
 de_silva_data_x = [7589.84818005749	18250.8760745211	43886.8432655531	105532.194945100]';
 de_silva_data_y = [1.08652e-2 2.13461e-3 4.36815e-4 9.36184e-5]';
@@ -56,4 +56,4 @@ hold off
 xlabel('$Re$',Interpreter='latex')
 ylabel('$\langle D\rangle/d$',Interpreter='latex')
 legend(Interpreter="latex")
-% daspect([1/(70000-4000) 1/(0.05-1e-4) 1])
+daspect([1/(0.05-1e-4) 1/(70000-4000) 1])

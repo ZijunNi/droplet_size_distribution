@@ -12,7 +12,7 @@ re_7810.pdf = [0.9895	1.21899	1.02616	0.8493	1.00889	0.8493	0.71496	0.80128	0.60
 
 
 %%%%%%%%%% 可调参数：初始状态和程序设置 %%%%%%%%%%
-initial_size = 1+rand(1,100);                                                    % 初始液滴大小分布
+initial_size = 1+rand(1,400);                                                    % 初始液滴大小分布
 num_steps = 500;                                               % 最大步数
 output_step = round(num_steps/100);            % 结果输出间隔
 %%%%%%%%%% 可调参数：初始状态和程序设置 %%%%%%%%%%
@@ -25,7 +25,8 @@ index_eta = 1;
 % 确保离散相总体积不变
 % phi = 0.01;
 % total_volume_of_domain = pi()*(3.5^2-2.5^2)*7.5;% Sun Chao 实验中的装置总体积
-fixed_total_volume = (15*data.critical_value(1))^3;%0.01*pi()*(3.5^2-2.5^2)*7.5;% 固定总体积为0.01*总体积，总体积来自Sun Chao实验中的装置总体积
+phi = 1;
+fixed_total_volume = phi*0.03^3;%0.01*pi()*(3.5^2-2.5^2)*7.5;% 固定总体积为0.01*总体积，总体积来自Sun Chao实验中的装置总体积
 total_volume = sum(initial_size.^3);
 normalized_size = initial_size./(total_volume^(1/3));
 initial_size = normalized_size*(fixed_total_volume)^(1/3);% 已验证：最终平均直径与离散相总体积有关
@@ -94,7 +95,7 @@ while (steps < num_steps)
 
                 % 计算聚合概率
                 %%%%%%%%%% 可调参数：聚合概率模型 %%%%%%%%%%
-                [prob, K] = aggregation_prob(s1, s2, break_threshold,re_tau);
+                [prob, K] = aggregation_prob(s1, s2, data.critical_value(index_eta), re_tau);
                 %%%%%%%%%% 可调参数：聚合概率模型 %%%%%%%%%%
                 if rand() < prob
                     % 成功聚合
@@ -128,7 +129,7 @@ while (steps < num_steps)
         error = std(num_droplets(end-output_step:end));
         criteria = 0.01*mean(num_droplets(end-output_step:end));
         
-        if (error < criteria&&num_met>20)% 退出条件：连续100步以上标准差小于均值的百分之一
+        if (error < criteria&&num_met>50)% 退出条件：连续100步以上标准差小于均值的百分之一
             break; 
         elseif(error < criteria)
             num_met = num_met + 1;
@@ -151,16 +152,24 @@ toc
 history(cellfun(@isempty,history))=[];
 
 %% 绘图
-if(1)
-    M = 20;
+
+if(1) 
+    M = 30;
     S = 1; 
     plot_droplets_stat(history,M,S,1);
+    drawnow;
+    saveas(gca, 'result.jpg');
+    
+    if(1)
+        mailme('聚并参数调整',{num2str(K),['Re_tau = ',num2str(re_tau)],['Volnume Fraction =',num2str(phi),'%']},'./result.jpg')
+    end
+
 end
 
 %% 保存
 
 % 定义需要保存的变量名称（根据实际情况修改）
-targetVars = {'a', 'history', 'K','index_eta','re_tau','data'}; % 替换为你的变量名
+targetVars = {'a', 'history', 'K','index_eta','re_tau','data','phi'}; % 替换为你的变量名
 
 % 生成格式化的时间字符串（安全文件名格式：YYYY-MM-DD_HH-MM-SS）
 timeStr = datestr(datetime('now'), 'yyyy-mm-dd_HH-MM-SS');

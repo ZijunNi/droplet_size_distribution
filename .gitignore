@@ -16,3 +16,12 @@ de_silva_data/*.pdf
 
 # 忽略特定的文件
 secret_config.json
+split/看起来还行/.DS_Store
+de_silva_data/.DS_Store
+doc/.DS_Store
+JHTDB_data/.DS_Store
+.DS_Store
+split/daughter_size_distribution_fixed.txt
+split/daughter_size_distribution_fixed.txt
+split/result.jpg
+.DS_Store

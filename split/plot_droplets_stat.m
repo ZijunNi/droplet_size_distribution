@@ -1,9 +1,12 @@
-function [edges,counts] = plot_droplets_stat(history,M,S,plot_switch)
+function [edges,counts,errors] = plot_droplets_stat(history,M,S,plot_switch)
 % 本函数处理coalescence_breakup.m得到的液滴迭代序列
 % history - 液滴迭代序列
 % M - 统计液滴样本数
 % S - 统计液滴样本间距
 % plot_switch - 完整统计信息绘制开关，1为打开
+
+% errors - PDF与实验的残差，默认是0
+    errors = 0;
 
 
     % 计算必要统计量
@@ -19,11 +22,13 @@ function [edges,counts] = plot_droplets_stat(history,M,S,plot_switch)
     
 
     % 自定义分箱边界
-    edges = [0.02:0.12:1.04, 1.05:0.1:3, inf];
+    % edges = [0.02:0.12:1.04, 1.05:0.1:3, inf];%绘图边界
+    edges = [0.02:0.02:3, inf];%检查边界
+    
 
     if(plot_switch)%绘制完整统计信息图
         % 创建主图形窗口
-        figure;
+        % figure;
         
         % ===== 左侧大图：尺寸分布 =====
         subplot(2, 2, [1, 3]);
@@ -33,12 +38,14 @@ function [edges,counts] = plot_droplets_stat(history,M,S,plot_switch)
         [counts, edges] = histcounts(normalized_final_sizes, edges, "Normalization", "pdf");
         centers = edges(1:end-1) + diff(edges)/2;
         plot(centers, counts, '-gx', 'LineWidth', 1.5, 'DisplayName', 'Simulation');
+
         hold on;
     
-        % ===== 添加尾部对数线性拟合 =====
+        % ===== 尾部对数线性拟合 =====
         % 识别尾部数据范围（从最大值到结束）
         [~, maxIdx] = max(counts);
-        tailIdx = maxIdx:length(counts);
+        endIdx = find(centers>2.2,1);
+        tailIdx = maxIdx:endIdx;
         
         % 提取尾部数据（排除零或负值）
         x_fit = centers(tailIdx);
@@ -63,7 +70,7 @@ function [edges,counts] = plot_droplets_stat(history,M,S,plot_switch)
             
             % 添加斜率信息到图例
             slope_str = sprintf('Slope: %.4f', slope);
-            text(0.7, 0.9, slope_str, 'Units', 'normalized', 'FontSize', 12, ...
+            text(0.6, 0.7, slope_str, 'Units', 'normalized', 'FontSize', 12, ...
                  'BackgroundColor', [1 1 1 0.7]);
             
         else
@@ -82,12 +89,26 @@ function [edges,counts] = plot_droplets_stat(history,M,S,plot_switch)
             
             plot(re_5210.di_less_dia, re_5210.pdf, 'rs', "LineWidth", 2, "DisplayName", 'Re = 5210 (Exp.)');
             plot(re_7810.di_less_dia, re_7810.pdf, 'bx', "LineWidth", 2, "DisplayName", 'Re = 7810 (Exp.)');
+            
+            % ===== 计算残差 ===== 
+            
+            x_target = [re_5210.di_less_dia re_7810.di_less_dia];
+            y_target = [re_5210.pdf re_7810.pdf];
+            
+            
+            [errors, in_range] = calcLogResiduals(centers, counts, x_target, y_target);
+            
+            str1 = sprintf('最小绝对残差: %.4f log-units\n', min(errors(in_range)));
+            str2 = sprintf('最大绝对残差: %.4f log-units\n', max(errors(in_range)));
+            str3 = sprintf('平均绝对残差: %.4f log-units\n', mean(errors(in_range)));
+            text(0.1, 0.1, {str1,str2,str3}, 'Units', 'normalized', 'FontSize', 12, ...
+            'BackgroundColor', [1 1 1 0.7]);
         end
         hold off;
         
         % 设置坐标轴
         set(gca, 'YScale', 'log');
-        legend('Location', 'southeast');
+        legend('Location', 'northeast');
         title(sprintf('Final Droplet Size Distribution \n Mean Size = %.5e and %6d Droplets', mean(final_sizes),length(final_sizes)));
         xlabel('Normalized Droplet Size $D/\langle D\rangle$', 'Interpreter', 'latex');
         ylabel('Probability Density');
